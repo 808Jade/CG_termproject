@@ -724,13 +724,11 @@ void drawScene()
         }
 
 
-        Building_Mat();
         Pilot();
         Pilot_collison();
         Gun();
         Gun_collision();
         BackGround();
-        Building_Setting();
     }
 
     glutSwapBuffers();
@@ -757,6 +755,7 @@ GLvoid KeyBoardUp(unsigned char key, int x, int y) {
         break;
     case 's':
         h_f.back_walk = false;
+        pilot.x_rotate = 0.f;
         break;
     }
     glutPostRedisplay();
@@ -782,7 +781,6 @@ GLvoid KeyBoard(unsigned char key, int x, int y) {
         break;
     case 'w':
         h_f.front_walk = true;
-        pilot.x_rotate = 15.0f;
         cout << "앞으로" << '\n';
         break;
     case 's':
@@ -862,6 +860,7 @@ void main(int argc, char** argv) {
     glutMouseFunc(Mouse);
     glutMotionFunc(Motion);
     glutReshapeFunc(Reshape);
+
     glutTimerFunc(5, Timer, 1);
 
     Building_Setting();
@@ -880,22 +879,29 @@ GLvoid Timer(int value) // get_events
     if (h_f.x_is_trans) {
         pilot.x_trans += 0.1;
     }
-    if (h_f.right_walk) {
+    else if (h_f.right_walk) {
         if (pilot.x_trans_aoc > -2.5)
             pilot.x_trans_aoc -= 0.01f;
     }
-    if (h_f.left_walk) {
+    else if (h_f.left_walk) {
         if (pilot.x_trans_aoc < 2.5)
             pilot.x_trans_aoc += 0.01f;
     }
-    if (h_f.back_walk) {
+    else if (h_f.back_walk) {
         pilot.z_trans_aoc -= 0.01f;
+        if (pilot.x_rotate > -15)
+            pilot.x_rotate -= 1.0f;
     }
-    if (h_f.front_walk) {
+    else if (h_f.front_walk) {
         pilot.z_trans_aoc += 0.01f;
+        if (pilot.x_rotate < 15)
+            pilot.x_rotate += 1.0f;
+    }
+    else {
+
     }
 
-    if (h_f.left_turn)
+    if (h_f.left_turn)  // 프로펠러 회전
         pilot.y_rotate_aoc += 10;
 
     glutPostRedisplay();
