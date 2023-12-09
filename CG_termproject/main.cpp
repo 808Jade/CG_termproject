@@ -751,11 +751,9 @@ GLvoid KeyBoardUp(unsigned char key, int x, int y) {
         break;
     case 'w':
         h_f.front_walk = false;
-        pilot.x_rotate = 0.f;
         break;
     case 's':
         h_f.back_walk = false;
-        pilot.x_rotate = 0.f;
         break;
     }
     glutPostRedisplay();
@@ -880,12 +878,17 @@ GLvoid Timer(int value) // get_events
         pilot.x_trans += 0.1;
     }
     else if (h_f.right_walk) {
-        if (pilot.x_trans_aoc > -2.5)
+        if (pilot.x_trans_aoc > -2.5) {
             pilot.x_trans_aoc -= 0.01f;
+            if (pilot.z_rotate < 15)
+                pilot.z_rotate += 1.0f;
+        }
     }
     else if (h_f.left_walk) {
         if (pilot.x_trans_aoc < 2.5)
-            pilot.x_trans_aoc += 0.01f;
+            pilot.x_trans_aoc += 0.01f; 
+        if (pilot.z_rotate > -15)
+            pilot.z_rotate -= 1.0f;
     }
     else if (h_f.back_walk) {
         pilot.z_trans_aoc -= 0.01f;
@@ -898,7 +901,14 @@ GLvoid Timer(int value) // get_events
             pilot.x_rotate += 1.0f;
     }
     else {
-
+        if (pilot.x_rotate < 0.f)
+            pilot.x_rotate += 1.0f;
+        if (pilot.x_rotate > 0.f)
+            pilot.x_rotate -= 1.0f;
+        if (pilot.z_rotate > 0.f)
+            pilot.z_rotate -= 1.0f;
+        if (pilot.z_rotate < 0.f)
+            pilot.z_rotate += 1.0f;
     }
 
     if (h_f.left_turn)  // 프로펠러 회전
