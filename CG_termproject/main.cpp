@@ -18,6 +18,48 @@
 #define pi 3.141592
 using namespace std;
 
+GLUquadricObj* qobj;
+GLuint s_program;
+GLuint VAO[3], VBO[6];
+
+//class Cube {
+//public:
+//    vector<glm::vec3> vertex;
+//    vector<glm::vec3> color;
+//    vector<glm::vec3> normals;
+//    vector<glm::vec2> uvs;
+//
+//    GLuint VAO[1], VBO[2];
+//
+//    Cube() {
+//    }
+//
+//    ~Cube() {
+//    }
+//
+//    void Bind() {
+//        glBindVertexArray(VAO[0]);
+//
+//        // Vertex buffer
+//        glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+//        glBufferData(GL_ARRAY_BUFFER, vertex.size() * sizeof(glm::vec3), vertex.data(), GL_STATIC_DRAW);
+//        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+//        glEnableVertexAttribArray(0);
+//
+//        // Normal buffer
+//        glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+//        glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), normals.data(), GL_STATIC_DRAW);
+//        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+//        glEnableVertexAttribArray(1);
+//    }
+//
+//    void Draw() {
+//        glBindVertexArray(VAO[0]);
+//        glDrawArrays(GL_TRIANGLES, 0, vertex.size());
+//    }
+//};
+//Cube cube;
+
 random_device rd;
 mt19937 gen(rd());
 
@@ -71,9 +113,7 @@ O pilot, build[1000][1000], temp_build[1000][1000];
 O temp, camera;
 F h_f, temp_f;
 
-GLUquadricObj* qobj;
-GLuint s_program;
-GLuint VAO[3], VBO[6];
+
 
 GLuint shaderID;
 GLuint vertexShader;
@@ -362,28 +402,41 @@ GLint Collision(float first_x1, float first_x2, float last_x1, float last_x2)  /
     return 0;
 }
 
+float buildingHeight = rand() % 10 + 1; // 랜덤한 높이 설정
 GLvoid Building_Mat()  // i'am 빌딩 만들기이에요
 {
     glm::mat4 B_Matrix = glm::mat4(1.0f);
     for (int i = 0; i < h_f.x_max; ++i) {
         for (int j = 0; j < h_f.z_max; ++j) {
-            //윗면
-            B_Matrix = glm::mat4(1.0f);
+
+
+            glm::mat4 B_Matrix = glm::mat4(1.0f);
             B_Matrix = glm::translate(B_Matrix, glm::vec3(build[i][j].x_trans, 0.f, build[i][j].z_trans));
-            B_Matrix = glm::scale(B_Matrix, glm::vec3(4.0f, build[i][j].y_scale, 4.0f));
-            B_Matrix = glm::translate(B_Matrix, glm::vec3(0.f, 0.2f, 0.f));
+            B_Matrix = glm::translate(B_Matrix, glm::vec3(0.f, 0.f, 0.f));
+            B_Matrix = glm::scale(B_Matrix, glm::vec3(4.0f, buildingHeight, 4.0f));
+
+            //// 윗면
+            //B_Matrix = glm::translate(B_Matrix, glm::vec3(build[i][j].x_trans, 0.f, build[i][j].z_trans));
+            //// 랜덤한 높이 설정
+            //B_Matrix = glm::translate(B_Matrix, glm::vec3(build[i][j].x_trans, buildingHeight * 0.5f, build[i][j].z_trans));
+            //B_Matrix = glm::scale(B_Matrix, glm::vec3(4.0f, buildingHeight, 4.0f));
+            //B_Matrix = glm::rotate(B_Matrix, glm::radians(pilot.y_rotate_aoc), glm::vec3(0.0f, 1.0f, 0.0f));  // only engin ans wings
+            //B_Matrix = glm::rotate(B_Matrix, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
+            //B_Matrix = glm::rotate(B_Matrix, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
             unsigned int StransformLocation = glGetUniformLocation(s_program, "transform");
             glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(B_Matrix));
+
             qobj = gluNewQuadric();
             gluQuadricDrawStyle(qobj, obj_type);
             int objColorLocation = glGetUniformLocation(s_program, "objectColor");
             unsigned isCheck = glGetUniformLocation(s_program, "isCheck");
             glUniform1f(isCheck, false);
-            glUniform4f(objColorLocation, 0.f, 0.5f, 0.5f, 1.0);
+            glm::vec4 cubeColor = glm::vec4(1.0f, 1.0f, 0.5f, 1.0f); // 색상을 원하는 값으로 설정
+            glUniform4f(objColorLocation, cubeColor.r, cubeColor.g, cubeColor.b, cubeColor.a);
             glBindVertexArray(VAO[0]);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
 
-            B_Matrix = glm::mat4(1.0f);
+            /*B_Matrix = glm::mat4(1.0f);
             B_Matrix = glm::translate(B_Matrix, glm::vec3(build[i][j].x_trans, 0.0f, build[i][j].z_trans));
             B_Matrix = glm::scale(B_Matrix, glm::vec3(4.0f, build[i][j].y_scale, 4.0f));
             B_Matrix = glm::translate(B_Matrix, glm::vec3(0.f, 0.2f, 0.f));
@@ -411,7 +464,9 @@ GLvoid Building_Mat()  // i'am 빌딩 만들기이에요
             glUniform1f(isCheck, false);
             glUniform4f(objColorLocation, 0.7f, 0.7f, 0.4f, 1.0);
             glBindVertexArray(VAO[2]);
-            glDrawArrays(GL_TRIANGLES, 6, 24);
+            glDrawArrays(GL_TRIANGLES, 6, 24);*/
+
+
         }
     }
 }
@@ -422,8 +477,8 @@ GLvoid Building_Setting()  // i'am 빌딩들 랜덤 생성이에요
     if (!building_setting_flag) {
         float range = 100.0f; // 헬리콥터 주변에 건물이 생성될 범위
 
-        uniform_real_distribution<> dis_x{ pilot.x_trans - range, pilot.x_trans + range };
-        uniform_real_distribution<> dis_z{ pilot.z_trans - range, pilot.z_trans + range };
+        uniform_real_distribution<> dis_x{ pilot.x_trans + range, pilot.x_trans + range };
+        uniform_real_distribution<> dis_z{ pilot.z_trans, pilot.z_trans + range };
 
         // 건물 위치 설정
         h_f.x_max = dis_x(gen);
@@ -654,7 +709,7 @@ GLvoid Gun_collision() // i'am 총알 충돌체크에요
 
 GLvoid BackGround() //i'am 지형이에요    < -   이번 숙제를 바탕으로 지형이 올라오게 만들고 요리피하고 총알로 부수면서 가는 게임을 함 만들어 볼까? 미로 찾기 마냥... 흠... 이건 일단 보류
 {
-    /*glm::mat4 Bottom = glm::mat4(1.0f);
+    glm::mat4 Bottom = glm::mat4(1.0f);
     Bottom = glm::scale(Bottom, glm::vec3(1000.0f, 0.f, 1000.0f));
     unsigned int StransformLocation = glGetUniformLocation(s_program, "transform");
     glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(Bottom));
@@ -665,7 +720,7 @@ GLvoid BackGround() //i'am 지형이에요    < -   이번 숙제를 바탕으�
     glUniform1f(isCheck, false);
     glUniform4f(objColorLocation, 0.7f, 0.7f, 0.4f, 1.0);
     glBindVertexArray(VAO[1]);
-    glDrawArrays(GL_TRIANGLES, 0, 6);*/
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
 
@@ -673,72 +728,55 @@ GLvoid BackGround() //i'am 지형이에요    < -   이번 숙제를 바탕으�
 void drawScene()
 {
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //깊이 체크 (컬링)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 깊이 검사 (클리핑)
     glUseProgram(s_program);
 
-    glm::vec3 cameraPos;
-    glm::vec3 cameraDirection;
-    glm::vec3 cameraUp;
     glm::mat4 view = glm::mat4(1.0f);
+    glm::mat4 projection = glm::mat4(1.0f);
 
     for (int i = 0; i < 2; ++i) {
         if (i == 0) {
             glViewport(0, 0, width, height);
-            if (!h_f.first_see) {  // 이건 3인칭 (기본값) => 헬기랑 같이 움직이게 하려 했는데 안된다... 흠... 다시 시도해보자
 
-                cameraPos = glm::vec3(pilot.x_trans, pilot.y_trans_aoc, pilot.z_trans_aoc - 0.3f);
-                cameraDirection = glm::vec3(pilot.x_trans, pilot.y_trans_aoc, pilot.z_trans_aoc);
-                cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
+            if (!h_f.first_see) { // 세 번째 시점 (기본값) => 헬기와 함께 이동하려고 시도했지만 작동하지 않았습니다... 다시 시도합니다.
+                glm::vec3 cameraPos = glm::vec3(pilot.x_trans, pilot.y_trans_aoc, pilot.z_trans_aoc - 0.3f);
+                glm::vec3 cameraDirection = glm::vec3(pilot.x_trans, pilot.y_trans_aoc, pilot.z_trans_aoc);
+                glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
                 view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
                 view = glm::rotate(view, glm::radians(-20.f), glm::vec3(1.0f, 0.0f, 0.0f));
                 view = glm::rotate(view, glm::radians(camera.y_rotate_aoc), glm::vec3(0.0f, 1.0f, 0.0f));
                 view = glm::translate(view, glm::vec3(-pilot.x_trans - pilot.x_trans_aoc, 0.0f, pilot.z_trans));
-                unsigned int viewLocation = glGetUniformLocation(s_program, "view"); //--- 뷰잉 변환 설정
-                glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]); //--- viewTransform 변수에 변환값 적용하기
             }
-            else {  // 이거 1인칭 하는건데 왜 안되는 것일까..? 수정 필요 
-                cout << "cam 2" << endl;
+            else { // 일인칭 시점
+                glm::vec3 cameraPos = glm::vec3(-pilot.x_trans - pilot.x_trans_aoc, 0.1f, -pilot.z_trans - pilot.z_trans_aoc);
+                glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, -1.0f);
+                glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
-                glm::vec3 cameraPos = glm::vec3(0.0f, 0.1f, 4.95f);			//위치
-                glm::vec3 cameraDirection = glm::vec3(0.0f, 0.05f, 5.95f);	//바라보는 방향
-                glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);			//카메라 상향
-                glm::mat4 view = glm::mat4(1.0f);
-                view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
+                view = glm::lookAt(cameraPos, cameraPos + cameraDirection, cameraUp);
                 view = glm::rotate(view, glm::radians(-10.0f), glm::vec3(1.0f, 0.0f, 0.0f));
                 view = glm::rotate(view, glm::radians(-pilot.y_rotate), glm::vec3(0.0f, 1.0f, 0.0f));
-                view = glm::translate(view, glm::vec3(-pilot.x_trans - pilot.x_trans_aoc, 0.0f, -pilot.z_trans - pilot.z_trans_aoc));
-                unsigned int viewLocation = glGetUniformLocation(s_program, "view");
-                glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
             }
 
-
-            glm::mat4 projection = glm::mat4(1.0f);
             projection = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 50.0f);
             projection = glm::translate(projection, glm::vec3(0.0, 0.0, -5.0));
-            unsigned int projectionLocation = glGetUniformLocation(s_program, "projection");
-            glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projection[0][0]);
-
         }
-        else {  // 미니맵
+        else { // 미니맵
             glViewport(1050, 550, 150, 150);
-            glm::vec3 cameraPos = glm::vec3(pilot.x_trans, 5.0f, pilot.z_trans);         //위치
-            glm::vec3 cameraDirection = glm::vec3(pilot.x_trans, 0.0f, pilot.z_trans);   //바라보는 방향
-            glm::vec3 cameraUp = glm::vec3(0.0f, 0.0f, 10.0f);         //카메라 상향
-            glm::mat4 view = glm::mat4(1.0f);
-            view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
+            glm::vec3 cameraPos = glm::vec3(pilot.x_trans, 5.0f, pilot.z_trans);
+            glm::vec3 cameraDirection = glm::vec3(pilot.x_trans, 0.0f, pilot.z_trans);
+            glm::vec3 cameraUp = glm::vec3(0.0f, 0.0f, 10.0f);
 
-            unsigned int viewLocation = glGetUniformLocation(s_program, "view");
-            glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
-            glm::mat4 projection = glm::mat4(1.0f);
+            view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
             projection = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 50.0f);
             projection = glm::translate(projection, glm::vec3(0.0, 0.0, -5.0));
-            unsigned int projectionLocation = glGetUniformLocation(s_program, "projection");
-            glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projection[0][0]);
-
         }
 
+        unsigned int viewLocation = glGetUniformLocation(s_program, "view");
+        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
+
+        unsigned int projectionLocation = glGetUniformLocation(s_program, "projection");
+        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projection[0][0]);
 
         Pilot();
         Pilot_collison();
@@ -751,6 +789,7 @@ void drawScene()
     glutSwapBuffers();
     glutPostRedisplay();
 }
+
 
 void Reshape(int w, int h) {
     g_window_w = w;
