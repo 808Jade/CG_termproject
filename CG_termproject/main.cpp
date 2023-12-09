@@ -55,6 +55,7 @@ typedef struct object {
 typedef struct function {
     bool x_is_trans{ false }, y_is_trans{ false }, z_is_trans{ false };
     int x_max{}, z_max{};
+
     bool left_walk{ false };
     bool right_walk{ false };
     bool front_walk{ false };
@@ -415,14 +416,23 @@ GLvoid Building_Mat()  // i'am 빌딩 만들기이에요
     }
 }
 
+bool building_setting_flag = false;
 GLvoid Building_Setting()  // i'am 빌딩들 랜덤 생성이에요
 {
+    if (!building_setting_flag) {
+        float range = 100.0f; // 헬리콥터 주변에 건물이 생성될 범위
 
-    uniform_int_distribution<> dis{ 900,1000 };   // 숫자 수정 필요
-    uniform_int_distribution<> disx_z{ 0,2000 };
-    h_f.x_max, h_f.z_max = dis(gen);
-    cout << h_f.x_max << ", " << h_f.z_max << '\n';
+        uniform_real_distribution<> dis_x{ pilot.x_trans - range, pilot.x_trans + range };
+        uniform_real_distribution<> dis_z{ pilot.z_trans - range, pilot.z_trans + range };
 
+        // 건물 위치 설정
+        h_f.x_max = dis_x(gen);
+        h_f.z_max = dis_z(gen);
+
+        cout << "Building position: " << h_f.x_max << ", " << h_f.z_max << '\n';
+
+        building_setting_flag = true;
+    }
 }
 
 
@@ -454,7 +464,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
     glBindVertexArray(VAO[0]);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
-    //날개 1
+    // 날개 1
     glm::mat4 H_Matrix1 = glm::mat4(1.0f);
     H_Matrix1 = glm::translate(H_Matrix1, glm::vec3(0.f, 0.f, pilot.z_trans_aoc));  // all
     H_Matrix1 = glm::translate(H_Matrix1, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
@@ -463,6 +473,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
     H_Matrix1 = glm::rotate(H_Matrix1, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
     H_Matrix1 = glm::translate(H_Matrix1, glm::vec3(0.0f, 1.1f, 0.0f));
     H_Matrix1 = glm::scale(H_Matrix1, glm::vec3(4.5f, 0.2f, 0.2f));
+
     StransformLocation = glGetUniformLocation(s_program, "transform");
     glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(H_Matrix1));
     qobj = gluNewQuadric();
@@ -474,7 +485,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
     glBindVertexArray(VAO[0]);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
-    //날개2
+    // 날개 2
     glm::mat4 H_Matrix2 = glm::mat4(1.0f);
     H_Matrix2 = glm::translate(H_Matrix2, glm::vec3(0.f, 0.f, pilot.z_trans_aoc));  // all
     H_Matrix2 = glm::translate(H_Matrix2, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
@@ -483,6 +494,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
     H_Matrix2 = glm::rotate(H_Matrix2, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
     H_Matrix2 = glm::translate(H_Matrix2, glm::vec3(0.0f, 1.1f, 0.0f));
     H_Matrix2 = glm::scale(H_Matrix2, glm::vec3(0.2f, 0.2f, 4.5f));
+
     StransformLocation = glGetUniformLocation(s_program, "transform");
     glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(H_Matrix2));
     qobj = gluNewQuadric();
@@ -656,41 +668,45 @@ GLvoid BackGround() //i'am 지형이에요    < -   이번 숙제를 바탕으�
     glDrawArrays(GL_TRIANGLES, 0, 6);*/
 }
 
+
+
 void drawScene()
 {
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //깊이 체크 (컬링)
     glUseProgram(s_program);
-    for (int i = 0; i < 2; ++i) {
 
+    glm::vec3 cameraPos;
+    glm::vec3 cameraDirection;
+    glm::vec3 cameraUp;
+    glm::mat4 view = glm::mat4(1.0f);
+
+    for (int i = 0; i < 2; ++i) {
         if (i == 0) {
             glViewport(0, 0, width, height);
             if (!h_f.first_see) {  // 이건 3인칭 (기본값) => 헬기랑 같이 움직이게 하려 했는데 안된다... 흠... 다시 시도해보자
-                glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, -0.3f);			//위치
-                glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f);	//바라보는 방향
-                glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);			//카메라 상향
-                glm::mat4 view = glm::mat4(1.0f);
+
+                cameraPos = glm::vec3(pilot.x_trans, pilot.y_trans_aoc, pilot.z_trans_aoc - 0.3f);
+                cameraDirection = glm::vec3(pilot.x_trans, pilot.y_trans_aoc, pilot.z_trans_aoc);
+                cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+
                 view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
-
-                view = glm::rotate(view, glm::radians(-30.f), glm::vec3(1.0f, 0.0f, 0.0f));
-
+                view = glm::rotate(view, glm::radians(-20.f), glm::vec3(1.0f, 0.0f, 0.0f));
                 view = glm::rotate(view, glm::radians(camera.y_rotate_aoc), glm::vec3(0.0f, 1.0f, 0.0f));
-
-                view = glm::translate(view, glm::vec3(pilot.x_trans_aoc, pilot.y_trans_aoc, pilot.z_trans_aoc));
-
-
+                view = glm::translate(view, glm::vec3(-pilot.x_trans - pilot.x_trans_aoc, 0.0f, pilot.z_trans));
                 unsigned int viewLocation = glGetUniformLocation(s_program, "view"); //--- 뷰잉 변환 설정
-                glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
+                glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]); //--- viewTransform 변수에 변환값 적용하기
             }
             else {  // 이거 1인칭 하는건데 왜 안되는 것일까..? 수정 필요 
+                cout << "cam 2" << endl;
+
                 glm::vec3 cameraPos = glm::vec3(0.0f, 0.1f, 4.95f);			//위치
                 glm::vec3 cameraDirection = glm::vec3(0.0f, 0.05f, 5.95f);	//바라보는 방향
                 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);			//카메라 상향
                 glm::mat4 view = glm::mat4(1.0f);
                 view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
-
                 view = glm::rotate(view, glm::radians(-10.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-
                 view = glm::rotate(view, glm::radians(-pilot.y_rotate), glm::vec3(0.0f, 1.0f, 0.0f));
                 view = glm::translate(view, glm::vec3(-pilot.x_trans - pilot.x_trans_aoc, 0.0f, -pilot.z_trans - pilot.z_trans_aoc));
                 unsigned int viewLocation = glGetUniformLocation(s_program, "view");
@@ -705,7 +721,7 @@ void drawScene()
             glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projection[0][0]);
 
         }
-        else {
+        else {  // 미니맵
             glViewport(1050, 550, 150, 150);
             glm::vec3 cameraPos = glm::vec3(pilot.x_trans, 5.0f, pilot.z_trans);         //위치
             glm::vec3 cameraDirection = glm::vec3(pilot.x_trans, 0.0f, pilot.z_trans);   //바라보는 방향
@@ -729,9 +745,11 @@ void drawScene()
         Gun();
         Gun_collision();
         BackGround();
+        Building_Mat();
     }
 
     glutSwapBuffers();
+    glutPostRedisplay();
 }
 
 void Reshape(int w, int h) {
@@ -768,22 +786,19 @@ GLvoid KeyBoard(unsigned char key, int x, int y) {
         break;
     case 'x':
         h_f.x_is_trans = !h_f.x_is_trans;
-        cout << "x축 이동(카메라가)" << '\n';
+    case 'y':
+        h_f.z_is_trans = !h_f.z_is_trans;
     case 'd':
         h_f.right_walk = true;
-        cout << "오른쪽으로" << '\n';
         break;
     case 'a':
         h_f.left_walk = true;
-        cout << "왼쪽으로" << '\n';
         break;
     case 'w':
         h_f.front_walk = true;
-        cout << "앞으로" << '\n';
         break;
     case 's':
         h_f.back_walk = true;
-        cout << "뒤로" << '\n';
         break;
     case 'm':
         h_f.left_turn = !h_f.left_turn;
@@ -872,12 +887,13 @@ GLvoid Setting()
 
 }
 
-GLvoid Timer(int value) // get_events
+GLvoid Timer(int value) // get_events ( 헬기 엔진 )
 {
     if (h_f.x_is_trans) {
         pilot.x_trans += 0.1;
     }
-    else if (h_f.right_walk) {
+
+    if (h_f.right_walk) {
         if (pilot.x_trans_aoc > -2.5) {
             pilot.x_trans_aoc -= 0.01f;
             if (pilot.z_rotate < 15)
