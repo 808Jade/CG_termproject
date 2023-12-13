@@ -347,8 +347,8 @@ GLvoid InitBuffer()
     glUniform3f(lightPosLocation, 5.0f, 10.0f, 0.0f);
     unsigned int lightColorLocation = glGetUniformLocation(s_program, "lightColor"); //--- lightColor 값 전달: (1.0, 1.0, 1.0) 백색
     glUniform3f(lightColorLocation, 1.0f, 1.0f, 1.0f);
-    unsigned int objColorLocation = glGetUniformLocation(s_program, "objectColor"); //--- object Color값 전달: (1.0, 0.5, 0.3)의 색
-    glUniform3f(objColorLocation, 0.7f, 0.7f, 0.4f);
+    //unsigned int objColorLocation = glGetUniformLocation(s_program, "objectColor"); //--- object Color값 전달: (1.0, 0.5, 0.3)의 색
+    //glUniform3f(objColorLocation, 0.7f, 0.7f, 0.4f);
 }
 
 GLint Collision(float first_x1, float first_x2, float last_x1, float last_x2)  // i'am 충돌체크에요
@@ -394,7 +394,7 @@ GLvoid Building_Mat()  // i'am 빌딩 만들기이에요
             unsigned isCheck = glGetUniformLocation(s_program, "isCheck");
             glUniform1f(isCheck, false);
             glm::vec4 cubeColor = glm::vec4(0.0f, 0.0f, 0.5f, 1.0f); // 색상을 원하는 값으로 설정
-            glUniform4f(objColorLocation, cubeColor.r, cubeColor.g, cubeColor.b, cubeColor.a);
+            glUniform3f(objColorLocation, cubeColor.r, cubeColor.g, cubeColor.b);
             glBindVertexArray(VAO[0]);
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -427,8 +427,6 @@ GLvoid Building_Mat()  // i'am 빌딩 만들기이에요
             glUniform4f(objColorLocation, 0.7f, 0.7f, 0.4f, 1.0);
             glBindVertexArray(VAO[2]);
             glDrawArrays(GL_TRIANGLES, 6, 24);*/
-
-
         }
     }
 }
@@ -477,7 +475,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
     int objColorLocation = glGetUniformLocation(s_program, "objectColor");
     unsigned isCheck = glGetUniformLocation(s_program, "isCheck");
     glUniform1f(isCheck, false);
-    glUniform4f(objColorLocation, 0.5f, 0.3f, 0.5f, 1.0);
+    glUniform3f(objColorLocation, 0.5f, 0.5f, 0.5f);
     glBindVertexArray(VAO[0]);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -498,7 +496,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
     objColorLocation = glGetUniformLocation(s_program, "objectColor");
     isCheck = glGetUniformLocation(s_program, "isCheck");
     glUniform1f(isCheck, false);
-    glUniform4f(objColorLocation, 0.0f, 0.0f, 1.0f, 1.0);
+    glUniform3f(objColorLocation, 0.5f, 0.5f, 0.5f);
     glBindVertexArray(VAO[0]);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -519,7 +517,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
     objColorLocation = glGetUniformLocation(s_program, "objectColor");
     isCheck = glGetUniformLocation(s_program, "isCheck");
     glUniform1f(isCheck, false);
-    glUniform4f(objColorLocation, 0.0f, 0.0f, 1.0f, 1.0);
+    glUniform3f(objColorLocation, 0.5f, 0.5f, 0.5f);
     glBindVertexArray(VAO[0]);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -538,7 +536,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
     objColorLocation = glGetUniformLocation(s_program, "objectColor");
     isCheck = glGetUniformLocation(s_program, "isCheck");
     glUniform1f(isCheck, false);
-    glUniform4f(objColorLocation, 0.0f, 0.0f, 1.0f, 1.0);
+    glUniform3f(objColorLocation, 0.5f, 0.5f, 0.5f);
     glBindVertexArray(VAO[0]);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -557,7 +555,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
     qobj = gluNewQuadric();
     gluQuadricDrawStyle(qobj, obj_type);
     glUniform1f(isCheck, false);
-    glUniform4f(objColorLocation, 0.0f, 0.0f, 1.0f, 1.0);
+    glUniform3f(objColorLocation, 0.5f, 0.5f, 0.5f);
     gluSphere(qobj, 1.0, 20, 30);
 
     // 몸통 뒤
@@ -575,7 +573,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
     qobj = gluNewQuadric();
     gluQuadricDrawStyle(qobj, obj_type);
     glUniform1f(isCheck, false);
-    glUniform4f(objColorLocation, 0.0f, 0.0f, 1.0f, 1.0);
+    glUniform3f(objColorLocation, 0.5f, 0.5f, 0.5f);
     gluCylinder(qobj, 0.3f, 1.1f, 0.5, 100, 1);
 
     // 몸통 뒤(꼬리앞)
@@ -593,7 +591,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
     qobj = gluNewQuadric();
     gluQuadricDrawStyle(qobj, obj_type);
     glUniform1f(isCheck, false);
-    glUniform4f(objColorLocation, 0.0f, 0.0f, 1.0f, 1.0);
+    glUniform3f(objColorLocation, 0.5f, 0.5f, 0.5f);
     gluCylinder(qobj, 0.3f, 0.3f, 1.5, 100, 1);
 
     // 몸통 뒤(꼬리 날개)
@@ -611,7 +609,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
     objColorLocation = glGetUniformLocation(s_program, "objectColor");
     isCheck = glGetUniformLocation(s_program, "isCheck");
     glUniform1f(isCheck, false);
-    glUniform4f(objColorLocation, 0.0f, 0.0f, 1.0f, 1.0);
+    glUniform3f(objColorLocation, 0.5f, 0.5f, 0.5f);
     glBindVertexArray(VAO[0]);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -630,7 +628,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
     objColorLocation = glGetUniformLocation(s_program, "objectColor");
     isCheck = glGetUniformLocation(s_program, "isCheck");
     glUniform1f(isCheck, false);
-    glUniform4f(objColorLocation, 1.0f, 0.3f, 0.7f, 1.0);
+    glUniform3f(objColorLocation, 0.5f, 0.5f, 0.5f);
     glBindVertexArray(VAO[0]);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -649,7 +647,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
     objColorLocation = glGetUniformLocation(s_program, "objectColor");
     isCheck = glGetUniformLocation(s_program, "isCheck");
     glUniform1f(isCheck, false);
-    glUniform4f(objColorLocation, 1.0f, 0.3f, 0.7f, 1.0);
+    glUniform3f(objColorLocation, 0.5f, 0.5f, 0.5f);
     glBindVertexArray(VAO[0]);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 }
@@ -675,7 +673,7 @@ GLvoid Bullet() //i'am 총알이에요
     qobj = gluNewQuadric();
     gluQuadricDrawStyle(qobj, obj_type);
     glUniform1f(isCheck, false);
-    glUniform4f(objColorLocation, 0.0f, 0.0f, 1.0f, 1.0);
+    glUniform3f(objColorLocation, 0.0f, 0.0f, 1.0f);
     gluSphere(qobj, 0.2, 20, 30);
 }
 
@@ -695,7 +693,7 @@ GLvoid Ground() // i'am 지형이에요
     unsigned int objColorLocation = glGetUniformLocation(s_program, "objectColor");
     unsigned isCheck = glGetUniformLocation(s_program, "isCheck");
     glUniform1f(isCheck, false);
-    glUniform4f(objColorLocation, 0.3f, 0.3f, 0.4f, 1.0f);
+    glUniform3f(objColorLocation, 0.3f, 0.3f, 0.4f);
     glBindVertexArray(VAO[1]);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
@@ -829,7 +827,7 @@ GLvoid KeyBoard(unsigned char key, int x, int y) {
         h_f.first_see = false;
         cout << "3인칭" << endl;
     case 'p':
-        h_f.shoot_bullet = !h_f.shoot_bullet;
+        h_f.shoot_bullet = true;
     }
     glutPostRedisplay();
 }
