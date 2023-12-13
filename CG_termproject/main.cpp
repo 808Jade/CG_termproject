@@ -364,7 +364,7 @@ GLint Collision(float first_x1, float first_x2, float last_x1, float last_x2)  /
     return 0;
 }
 
-float buildingHeight = rand() % 10 + 1; // 랜덤한 높이 설정
+float buildingHeight = rand() % 30 + 1; // 랜덤한 높이 설정
 GLvoid Building_Mat()  // i'am 빌딩 만들기이에요
 {
     glm::mat4 B_Matrix = glm::mat4(1.0f);
@@ -693,7 +693,7 @@ GLvoid Ground() // i'am 지형이에요
     unsigned int objColorLocation = glGetUniformLocation(s_program, "objectColor");
     unsigned isCheck = glGetUniformLocation(s_program, "isCheck");
     glUniform1f(isCheck, false);
-    glUniform3f(objColorLocation, 0.3f, 0.3f, 0.4f);
+    glUniform3f(objColorLocation, 0.3f, 0.3f, 0.3f);
     glBindVertexArray(VAO[1]);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
