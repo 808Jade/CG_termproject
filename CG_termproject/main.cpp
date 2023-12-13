@@ -50,7 +50,7 @@ typedef struct object {
     float x_trans_aoc{}, y_trans_aoc{}, z_trans_aoc{};
     float x_rotate{}, y_rotate{}, z_rotate{};
     float x_rotate_aoc{}, y_rotate_aoc{}, z_rotate_aoc{};
-    float x_scale{ }, y_scale{}, z_scale{};
+    float x_scale{}, y_scale{}, z_scale{};
     float x_scale_aoc{}, y_scale_aoc{}, z_scale_aoc{};
     float color_r{}, color_g{}, color_b{};
 
@@ -465,7 +465,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
 {
     // 날개 연결부
     glm::mat4 H_Matrix = glm::mat4(1.0f);
-    H_Matrix = glm::translate(H_Matrix, glm::vec3(0.f, 0.f, pilot.z_trans_aoc));  // all
+    H_Matrix = glm::translate(H_Matrix, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));  // all
     H_Matrix = glm::translate(H_Matrix, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
     H_Matrix = glm::rotate(H_Matrix, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
     H_Matrix = glm::rotate(H_Matrix, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
@@ -485,7 +485,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
 
     // 날개 1
     glm::mat4 H_Matrix1 = glm::mat4(1.0f);
-    H_Matrix1 = glm::translate(H_Matrix1, glm::vec3(0.f, 0.f, pilot.z_trans_aoc));  // all
+    H_Matrix1 = glm::translate(H_Matrix1, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));  // all
     H_Matrix1 = glm::translate(H_Matrix1, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
     H_Matrix1 = glm::rotate(H_Matrix1, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
     H_Matrix1 = glm::rotate(H_Matrix1, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
@@ -506,7 +506,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
 
     // 날개 2
     glm::mat4 H_Matrix2 = glm::mat4(1.0f);
-    H_Matrix2 = glm::translate(H_Matrix2, glm::vec3(0.f, 0.f, pilot.z_trans_aoc));  // all
+    H_Matrix2 = glm::translate(H_Matrix2, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));  // all
     H_Matrix2 = glm::translate(H_Matrix2, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
     H_Matrix2 = glm::rotate(H_Matrix2, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
     H_Matrix2 = glm::rotate(H_Matrix2, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
@@ -527,7 +527,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
 
     // 몸통 중간
     glm::mat4 H_Matrix3 = glm::mat4(1.0f);
-    H_Matrix3 = glm::translate(H_Matrix3, glm::vec3(0.f, 0.f, pilot.z_trans_aoc));  // all
+    H_Matrix3 = glm::translate(H_Matrix3, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));  // all
     H_Matrix3 = glm::translate(H_Matrix3, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
     H_Matrix3 = glm::rotate(H_Matrix3, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
     H_Matrix3 = glm::rotate(H_Matrix3, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
@@ -546,7 +546,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
 
     // 몸통 앞
     glm::mat4 H_Matrix4 = glm::mat4(1.0f);
-    H_Matrix4 = glm::translate(H_Matrix4, glm::vec3(0.f, 0.f, pilot.z_trans_aoc));
+    H_Matrix4 = glm::translate(H_Matrix4, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));
     H_Matrix4 = glm::translate(H_Matrix4, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));
     H_Matrix4 = glm::rotate(H_Matrix4, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));
     H_Matrix4 = glm::rotate(H_Matrix4, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));
@@ -564,7 +564,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
 
     // 몸통 뒤
     glm::mat4 H_Matrix5 = glm::mat4(1.0f);
-    H_Matrix5 = glm::translate(H_Matrix5, glm::vec3(0.f, 0.f, pilot.z_trans_aoc));  // all
+    H_Matrix5 = glm::translate(H_Matrix5, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));  // all
     H_Matrix5 = glm::translate(H_Matrix5, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
     H_Matrix5 = glm::rotate(H_Matrix5, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
     H_Matrix5 = glm::rotate(H_Matrix5, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
@@ -582,7 +582,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
 
     // 몸통 뒤(꼬리앞)
     glm::mat4 H_Matrix6 = glm::mat4(1.0f);
-    H_Matrix6 = glm::translate(H_Matrix6, glm::vec3(0.f, 0.f, pilot.z_trans_aoc));  // all
+    H_Matrix6 = glm::translate(H_Matrix6, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));  // all
     H_Matrix6 = glm::translate(H_Matrix6, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
     H_Matrix6 = glm::rotate(H_Matrix6, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
     H_Matrix6 = glm::rotate(H_Matrix6, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
@@ -600,7 +600,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
 
     // 몸통 뒤(꼬리 날개)
     glm::mat4 H_Matrix7 = glm::mat4(1.0f);
-    H_Matrix7 = glm::translate(H_Matrix7, glm::vec3(0.f, 0.f, pilot.z_trans_aoc));  // all
+    H_Matrix7 = glm::translate(H_Matrix7, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));  // all
     H_Matrix7 = glm::translate(H_Matrix7, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
     H_Matrix7 = glm::rotate(H_Matrix7, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
     H_Matrix7 = glm::rotate(H_Matrix7, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
@@ -619,7 +619,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
 
     //본체 바닥(왼쪽)
     H_Matrix = glm::mat4(1.0f);
-    H_Matrix = glm::translate(H_Matrix, glm::vec3(0.f, 0.f, pilot.z_trans_aoc));
+    H_Matrix = glm::translate(H_Matrix, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));
     H_Matrix = glm::translate(H_Matrix, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));
     H_Matrix = glm::rotate(H_Matrix, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
     H_Matrix = glm::rotate(H_Matrix, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
@@ -638,7 +638,7 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
 
     //본체 바닥2
     H_Matrix = glm::mat4(1.0f);
-    H_Matrix = glm::translate(H_Matrix, glm::vec3(0.f, 0.f, pilot.z_trans_aoc));
+    H_Matrix = glm::translate(H_Matrix, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));
     H_Matrix = glm::translate(H_Matrix, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));
     H_Matrix = glm::rotate(H_Matrix, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
     H_Matrix = glm::rotate(H_Matrix, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
@@ -661,7 +661,7 @@ GLvoid Pilot_collison()  // i'am 헬기 충돌 체크에요 (vs 건물) 총알 �
 
 }
 
-GLvoid Gun() //i'am 총알이에요
+GLvoid Bullet() //i'am 총알이에요
 {
     glm::mat4 Bullet = glm::mat4(1.0f);
     Bullet = glm::translate(Bullet, glm::vec3(pilot.x_trans_aoc, pilot.y_trans_aoc, pilot.z_trans_aoc));
@@ -759,7 +759,7 @@ void drawScene()
 
         Pilot();
         Pilot_collison();
-        Gun();
+        Bullet();
         Gun_collision();
         BackGround();
         Building_Mat();
@@ -861,7 +861,8 @@ void Motion(int x, int y)
 
 }
 
-void MouseChange(int x, int y) {
+void MouseChange(int x, int y) 
+{
 
 }
 
@@ -875,11 +876,9 @@ void main(int argc, char** argv) {
 
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK)
-    {
-        cerr << "NOT INIT" << endl;
-    }
+        cerr << "NOT INIT" << '\n';
     else
-        cout << "INIT" << endl;
+        cout << "INIT" << '\n';
 
     InitShader();
     InitBuffer();
