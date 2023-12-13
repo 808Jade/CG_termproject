@@ -684,7 +684,7 @@ GLvoid Gun_collision() // i'am 총알 충돌체크에요
 
 }
 
-GLvoid BackGround() // i'am 지형이에요
+GLvoid Ground() // i'am 지형이에요
 {
     glm::mat4 Bottom = glm::mat4(1.0f);
     Bottom = glm::scale(Bottom, glm::vec3(1000.0f, 0.f, 1000.0f));
@@ -692,10 +692,10 @@ GLvoid BackGround() // i'am 지형이에요
     glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(Bottom));
     qobj = gluNewQuadric();
     gluQuadricDrawStyle(qobj, obj_type);
-    int objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    unsigned int objColorLocation = glGetUniformLocation(s_program, "objectColor");
     unsigned isCheck = glGetUniformLocation(s_program, "isCheck");
     glUniform1f(isCheck, false);
-    glUniform4f(objColorLocation, 0.7f, 0.7f, 0.4f, 1.0);
+    glUniform4f(objColorLocation, 0.3f, 0.3f, 0.4f, 1.0f);
     glBindVertexArray(VAO[1]);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
@@ -757,7 +757,7 @@ void drawScene()
         Pilot_collison();
         Bullet();
         Gun_collision();
-        BackGround();
+        Ground();
         Building_Mat();
     }
 
