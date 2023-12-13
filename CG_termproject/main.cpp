@@ -342,7 +342,6 @@ GLvoid InitBuffer()
     glEnableVertexAttribArray(0);
 
 
-
     glUseProgram(s_program);
     unsigned int lightPosLocation = glGetUniformLocation(s_program, "lightPos"); //--- lightPos 값 전달: (0.0, 0.0, 5.0);
     glUniform3f(lightPosLocation, 5.0f, 10.0f, 0.0f);
@@ -350,7 +349,6 @@ GLvoid InitBuffer()
     glUniform3f(lightColorLocation, 1.0f, 1.0f, 1.0f);
     unsigned int objColorLocation = glGetUniformLocation(s_program, "objectColor"); //--- object Color값 전달: (1.0, 0.5, 0.3)의 색
     glUniform3f(objColorLocation, 0.7f, 0.7f, 0.4f);
-
 }
 
 GLint Collision(float first_x1, float first_x2, float last_x1, float last_x2)  // i'am 충돌체크에요
@@ -395,7 +393,7 @@ GLvoid Building_Mat()  // i'am 빌딩 만들기이에요
             int objColorLocation = glGetUniformLocation(s_program, "objectColor");
             unsigned isCheck = glGetUniformLocation(s_program, "isCheck");
             glUniform1f(isCheck, false);
-            glm::vec4 cubeColor = glm::vec4(1.0f, 1.0f, 0.5f, 1.0f); // 색상을 원하는 값으로 설정
+            glm::vec4 cubeColor = glm::vec4(0.0f, 0.0f, 0.5f, 1.0f); // 색상을 원하는 값으로 설정
             glUniform4f(objColorLocation, cubeColor.r, cubeColor.g, cubeColor.b, cubeColor.a);
             glBindVertexArray(VAO[0]);
             glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -441,7 +439,7 @@ GLvoid Building_Setting()  // i'am 빌딩들 랜덤 생성이에요
     if (!building_setting_flag) {
         float range = 100.0f; // 헬리콥터 주변에 건물이 생성될 범위
 
-        uniform_real_distribution<> dis_x{ pilot.x_trans + range, pilot.x_trans + range };
+        uniform_real_distribution<> dis_x{ pilot.x_trans, pilot.x_trans + range };
         uniform_real_distribution<> dis_z{ pilot.z_trans, pilot.z_trans + range };
 
         // 건물 위치 설정
@@ -702,8 +700,6 @@ GLvoid BackGround() // i'am 지형이에요
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-
-
 void drawScene()
 {
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
@@ -950,7 +946,11 @@ GLvoid Timer(int value) // get_events ( 헬기 엔진 )
     pilot.y_rotate_aoc += 10;
 
     if (h_f.shoot_bullet)
-        bullet.z_trans += 0.1f;
+        bullet.z_trans += 0.3f;
+    if (bullet.z_trans > 15) {
+        bullet.z_trans = 0;
+        h_f.shoot_bullet = false;
+    }
 
     glutPostRedisplay();
     glutTimerFunc(5, Timer, 1);
