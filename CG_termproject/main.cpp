@@ -22,46 +22,9 @@ GLUquadricObj* qobj;
 GLuint s_program;
 GLuint VAO[3], VBO[6];
 
-//class Cube {
-//public:
-//    vector<glm::vec3> vertex;
-//    vector<glm::vec3> color;
-//    vector<glm::vec3> normals;
-//    vector<glm::vec2> uvs;
-//
-//    GLuint VAO[1], VBO[2];
-//
-//    Cube() {
-//    }
-//
-//    ~Cube() {
-//    }
-//
-//    void Bind() {
-//        glBindVertexArray(VAO[0]);
-//
-//        // Vertex buffer
-//        glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-//        glBufferData(GL_ARRAY_BUFFER, vertex.size() * sizeof(glm::vec3), vertex.data(), GL_STATIC_DRAW);
-//        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-//        glEnableVertexAttribArray(0);
-//
-//        // Normal buffer
-//        glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-//        glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), normals.data(), GL_STATIC_DRAW);
-//        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-//        glEnableVertexAttribArray(1);
-//    }
-//
-//    void Draw() {
-//        glBindVertexArray(VAO[0]);
-//        glDrawArrays(GL_TRIANGLES, 0, vertex.size());
-//    }
-//};
-//Cube cube;
-
-random_device rd;
-mt19937 gen(rd());
+std::random_device rd;
+std::mt19937 gen(rd());
+std::uniform_real_distribution<> random_color(0.1, 1);
 
 bool test = true;
 GLvoid drawScene();
@@ -107,9 +70,10 @@ typedef struct function {
 
     bool first_see{ false };
 
+    bool shoot_bullet{ false };
 }F;
 
-O pilot, build[1000][1000], temp_build[1000][1000];
+O pilot, build[1000][1000], temp_build[1000][1000], shoot;
 O temp, camera;
 F h_f, temp_f;
 
@@ -370,7 +334,7 @@ GLvoid InitBuffer()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
-    glBindVertexArray(VAO[(1)]);
+    glBindVertexArray(VAO[1]);
     glGenBuffers(2, &VBO[1]);
     glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(bottom), bottom, GL_STATIC_DRAW);
@@ -503,9 +467,9 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
     glm::mat4 H_Matrix = glm::mat4(1.0f);
     H_Matrix = glm::translate(H_Matrix, glm::vec3(0.f, 0.f, pilot.z_trans_aoc));  // all
     H_Matrix = glm::translate(H_Matrix, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
-    H_Matrix = glm::rotate(H_Matrix, glm::radians(pilot.y_rotate_aoc), glm::vec3(0.0f, 1.0f, 0.0f));  // only engin ans wings
     H_Matrix = glm::rotate(H_Matrix, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
     H_Matrix = glm::rotate(H_Matrix, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
+    H_Matrix = glm::rotate(H_Matrix, glm::radians(pilot.y_rotate_aoc), glm::vec3(0.0f, 1.0f, 0.0f));  // only engin ans wings
     H_Matrix = glm::translate(H_Matrix, glm::vec3(0.0f, 1.0f, 0.0f));
     H_Matrix = glm::scale(H_Matrix, glm::vec3(0.2f, 0.5f, 0.2f));
     unsigned int StransformLocation = glGetUniformLocation(s_program, "transform");
@@ -523,9 +487,9 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
     glm::mat4 H_Matrix1 = glm::mat4(1.0f);
     H_Matrix1 = glm::translate(H_Matrix1, glm::vec3(0.f, 0.f, pilot.z_trans_aoc));  // all
     H_Matrix1 = glm::translate(H_Matrix1, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
-    H_Matrix1 = glm::rotate(H_Matrix1, glm::radians(pilot.y_rotate_aoc), glm::vec3(0.0f, 1.0f, 0.0f));  // only engin ans wings
     H_Matrix1 = glm::rotate(H_Matrix1, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
     H_Matrix1 = glm::rotate(H_Matrix1, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
+    H_Matrix1 = glm::rotate(H_Matrix1, glm::radians(pilot.y_rotate_aoc), glm::vec3(0.0f, 1.0f, 0.0f));  // only engin ans wings
     H_Matrix1 = glm::translate(H_Matrix1, glm::vec3(0.0f, 1.1f, 0.0f));
     H_Matrix1 = glm::scale(H_Matrix1, glm::vec3(4.5f, 0.2f, 0.2f));
 
@@ -544,9 +508,9 @@ GLvoid Pilot() // i'am 헬기(조종사) 에요
     glm::mat4 H_Matrix2 = glm::mat4(1.0f);
     H_Matrix2 = glm::translate(H_Matrix2, glm::vec3(0.f, 0.f, pilot.z_trans_aoc));  // all
     H_Matrix2 = glm::translate(H_Matrix2, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
-    H_Matrix2 = glm::rotate(H_Matrix2, glm::radians(pilot.y_rotate_aoc), glm::vec3(0.0f, 1.0f, 0.0f));  // only engin ans wings
     H_Matrix2 = glm::rotate(H_Matrix2, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
     H_Matrix2 = glm::rotate(H_Matrix2, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
+    H_Matrix2 = glm::rotate(H_Matrix2, glm::radians(pilot.y_rotate_aoc), glm::vec3(0.0f, 1.0f, 0.0f));  // only engin ans wings
     H_Matrix2 = glm::translate(H_Matrix2, glm::vec3(0.0f, 1.1f, 0.0f));
     H_Matrix2 = glm::scale(H_Matrix2, glm::vec3(0.2f, 0.2f, 4.5f));
 
@@ -699,7 +663,22 @@ GLvoid Pilot_collison()  // i'am 헬기 충돌 체크에요 (vs 건물) 총알 �
 
 GLvoid Gun() //i'am 총알이에요
 {
-
+    glm::mat4 Bullet = glm::mat4(1.0f);
+    Bullet = glm::translate(Bullet, glm::vec3(pilot.x_trans_aoc, pilot.y_trans_aoc, pilot.z_trans_aoc));
+    Bullet = glm::rotate(Bullet, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));
+    Bullet = glm::rotate(Bullet, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));
+    Bullet = glm::translate(Bullet, glm::vec3(0.f, 0.f, shoot.z_trans));
+    Bullet = glm::translate(Bullet, glm::vec3(0.f, 0.65f, 0.3f));
+    Bullet = glm::scale(Bullet, glm::vec3(0.3f, 0.3f, 0.4f));
+    unsigned int StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(Bullet));
+    int objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    unsigned isCheck = glGetUniformLocation(s_program, "isCheck");
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.0f, 0.0f, 1.0f, 1.0);
+    gluSphere(qobj, 0.2, 20, 30);
 }
 
 GLvoid Gun_collision() // i'am 총알 충돌체크에요
@@ -707,7 +686,7 @@ GLvoid Gun_collision() // i'am 총알 충돌체크에요
 
 }
 
-GLvoid BackGround() //i'am 지형이에요    < -   이번 숙제를 바탕으로 지형이 올라오게 만들고 요리피하고 총알로 부수면서 가는 게임을 함 만들어 볼까? 미로 찾기 마냥... 흠... 이건 일단 보류
+GLvoid BackGround() // i'am 지형이에요
 {
     glm::mat4 Bottom = glm::mat4(1.0f);
     Bottom = glm::scale(Bottom, glm::vec3(1000.0f, 0.f, 1000.0f));
@@ -738,7 +717,7 @@ void drawScene()
         if (i == 0) {
             glViewport(0, 0, width, height);
 
-            if (!h_f.first_see) { // 세 번째 시점 (기본값) => 헬기와 함께 이동하려고 시도했지만 작동하지 않았습니다... 다시 시도합니다.
+            if (!h_f.first_see) { // 삼 인칭 시점
                 glm::vec3 cameraPos = glm::vec3(pilot.x_trans, pilot.y_trans_aoc, pilot.z_trans_aoc - 0.3f);
                 glm::vec3 cameraDirection = glm::vec3(pilot.x_trans, pilot.y_trans_aoc, pilot.z_trans_aoc);
                 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -853,6 +832,8 @@ GLvoid KeyBoard(unsigned char key, int x, int y) {
     case '3':
         h_f.first_see = false;
         cout << "3인칭" << endl;
+    case 'p':
+        h_f.shoot_bullet = !h_f.shoot_bullet;
     }
     glutPostRedisplay();
 }
@@ -946,12 +927,12 @@ GLvoid Timer(int value) // get_events ( 헬기 엔진 )
             pilot.z_rotate -= 1.0f;
     }
     else if (h_f.back_walk) {
-        pilot.z_trans_aoc -= 0.01f;
+        pilot.y_trans_aoc -= 0.01f;
         if (pilot.x_rotate > -15)
             pilot.x_rotate -= 1.0f;
     }
     else if (h_f.front_walk) {
-        pilot.z_trans_aoc += 0.01f;
+        pilot.y_trans_aoc += 0.01f;
         if (pilot.x_rotate < 15)
             pilot.x_rotate += 1.0f;
     }
@@ -966,8 +947,11 @@ GLvoid Timer(int value) // get_events ( 헬기 엔진 )
             pilot.z_rotate += 1.0f;
     }
 
-    if (h_f.left_turn)  // 프로펠러 회전
-        pilot.y_rotate_aoc += 10;
+    // 프로펠러 회전
+    pilot.y_rotate_aoc += 10;
+
+    if (h_f.shoot_bullet)
+        shoot.z_trans += 0.1f;
 
     glutPostRedisplay();
     glutTimerFunc(5, Timer, 1);
