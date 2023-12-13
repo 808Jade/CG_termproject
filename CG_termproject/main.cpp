@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <gl/glew.h>
+#include <gl/glut.h>
 #include <gl/freeglut.h>
 #include <gl/freeglut_ext.h>
 #include <gl/glm/glm.hpp>
@@ -661,8 +662,8 @@ GLvoid Bullet() //i'am 총알이에요
 {
     glm::mat4 Bullet = glm::mat4(1.0f);
     Bullet = glm::translate(Bullet, glm::vec3(pilot.x_trans_aoc, pilot.y_trans_aoc, pilot.z_trans_aoc));
-    Bullet = glm::rotate(Bullet, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));
-    Bullet = glm::rotate(Bullet, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));
+    Bullet = glm::rotate(Bullet, glm::radians(bullet.x_rotate), glm::vec3(1.0f, 0.f, 0.f));
+    Bullet = glm::rotate(Bullet, glm::radians(bullet.z_rotate), glm::vec3(0.f, 0.f, 1.0f));
     Bullet = glm::translate(Bullet, glm::vec3(0.f, 0.f, bullet.z_trans));
     Bullet = glm::translate(Bullet, glm::vec3(0.f, 0.65f, 0.3f));
     Bullet = glm::scale(Bullet, glm::vec3(0.3f, 0.3f, 0.4f));
@@ -763,7 +764,6 @@ void drawScene()
     glutPostRedisplay();
 }
 
-
 void Reshape(int w, int h) {
     g_window_w = w;
     g_window_h = h;
@@ -789,7 +789,9 @@ GLvoid KeyBoardUp(unsigned char key, int x, int y) {
     glutPostRedisplay();
 }
 
-GLvoid KeyBoard(unsigned char key, int x, int y) {
+GLvoid KeyBoard(unsigned char key, int x, int y) 
+{
+    cout << key;
     switch (key)
     {
     case 'q':
@@ -798,8 +800,10 @@ GLvoid KeyBoard(unsigned char key, int x, int y) {
         break;
     case 'x':
         h_f.x_is_trans = !h_f.x_is_trans;
+        break;
     case 'y':
         h_f.z_is_trans = !h_f.z_is_trans;
+        break;
     case 'd':
         h_f.right_walk = true;
         break;
@@ -823,24 +827,34 @@ GLvoid KeyBoard(unsigned char key, int x, int y) {
     case '1':
         h_f.first_see = true;
         cout << "1인칭" << endl;
+        break;
     case '3':
         h_f.first_see = false;
         cout << "3인칭" << endl;
-    case 'p':
+        break;
+    case ' ':
         h_f.shoot_bullet = true;
+        break;
     }
     glutPostRedisplay();
 }
 
 GLvoid SpecialKeyBoard(int key, int x, int y)
 {
+    switch (key)
+    {
+        case 32:
+            cout << " bullet ";
+            h_f.shoot_bullet = true;
 
+    }
     glutPostRedisplay();
 }
 
 GLvoid SpecialKeyBoardUp(int key, int x, int y)
 {
-    switch (key) {
+    switch (key) 
+    {
     }
     glutPostRedisplay();
 }
@@ -943,12 +957,16 @@ GLvoid Timer(int value) // get_events ( 헬기 엔진 )
     // 프로펠러 회전
     pilot.y_rotate_aoc += 10;
 
+    // 총알 event
     if (h_f.shoot_bullet)
         bullet.z_trans += 0.3f;
     if (bullet.z_trans > 15) {
         bullet.z_trans = 0;
         h_f.shoot_bullet = false;
     }
+
+    // Building event
+
 
     glutPostRedisplay();
     glutTimerFunc(5, Timer, 1);
