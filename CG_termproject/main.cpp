@@ -73,7 +73,7 @@ typedef struct function {
     bool shoot_bullet{ false };
 }F;
 
-O pilot, build[1000][1000], temp_build[1000][1000], shoot;
+O pilot, build[1000][1000], temp_build[1000][1000], bullet;
 O temp, camera;
 F h_f, temp_f;
 
@@ -463,7 +463,7 @@ GLfloat arm_rot;
 GLfloat limit;
 GLvoid Pilot() // i'am 헬기(조종사) 에요
 {
-    //엔진
+    // 날개 연결부
     glm::mat4 H_Matrix = glm::mat4(1.0f);
     H_Matrix = glm::translate(H_Matrix, glm::vec3(0.f, 0.f, pilot.z_trans_aoc));  // all
     H_Matrix = glm::translate(H_Matrix, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
@@ -667,7 +667,7 @@ GLvoid Gun() //i'am 총알이에요
     Bullet = glm::translate(Bullet, glm::vec3(pilot.x_trans_aoc, pilot.y_trans_aoc, pilot.z_trans_aoc));
     Bullet = glm::rotate(Bullet, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));
     Bullet = glm::rotate(Bullet, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));
-    Bullet = glm::translate(Bullet, glm::vec3(0.f, 0.f, shoot.z_trans));
+    Bullet = glm::translate(Bullet, glm::vec3(0.f, 0.f, bullet.z_trans));
     Bullet = glm::translate(Bullet, glm::vec3(0.f, 0.65f, 0.3f));
     Bullet = glm::scale(Bullet, glm::vec3(0.3f, 0.3f, 0.4f));
     unsigned int StransformLocation = glGetUniformLocation(s_program, "transform");
@@ -951,7 +951,7 @@ GLvoid Timer(int value) // get_events ( 헬기 엔진 )
     pilot.y_rotate_aoc += 10;
 
     if (h_f.shoot_bullet)
-        shoot.z_trans += 0.1f;
+        bullet.z_trans += 0.1f;
 
     glutPostRedisplay();
     glutTimerFunc(5, Timer, 1);
