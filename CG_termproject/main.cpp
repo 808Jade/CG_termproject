@@ -4,7 +4,6 @@
 #include <iostream>
 #include <fstream>
 #include <gl/glew.h>
-#include <gl/glut.h>
 #include <gl/freeglut.h>
 #include <gl/freeglut_ext.h>
 #include <gl/glm/glm.hpp>
@@ -12,6 +11,7 @@
 #include <gl/glm/gtc/matrix_transform.hpp>
 #include <random>
 #include <string>
+
 
 #define width 1200
 #define height 800
@@ -74,6 +74,7 @@ typedef struct function {
     bool first_see{ false };
 
     bool shoot_bullet{ false };
+    bool game_start{ false };
 }F;
 
 O pilot, build[1000][1000], temp_build[1000][1000], bullet;
@@ -266,18 +267,23 @@ GLint Collision(float first_x1, float first_x2, float last_x1, float last_x2)  /
     return 0;
 }
 
-void CollisionCheck(int i, int j)
+GLvoid CollisionCheck(int i, int j)
 {
-    if ((build[i][j].x_trans - 0.6f) < pilot.x_trans_aoc && pilot.x_trans_aoc < (build[i][j].x_trans + 0.6f) && pilot.y_trans_aoc < build[i][j].y_scale / 5 - 0.2f)
-        cout << "충돌" << i << " : " << pilot.x_trans_aoc << ", " << pilot.y_trans_aoc << ", " << build[i][j].y_scale / 5 << '\n';
+    if ((build[i][j].x_trans - 0.6f) < pilot.x_trans_aoc && pilot.x_trans_aoc < (build[i][j].x_trans + 0.6f) && pilot.y_trans_aoc < build[i][j].y_scale / 5 - 0.2f) {
+
+    }
+        // cout << "충돌" << i << " : " << pilot.x_trans_aoc << ", " << pilot.y_trans_aoc << ", " << build[i][j].y_scale / 5 << '\n';
     
-    
+
 }
 
 
-GLvoid Gun_collision() // i'am 총알 충돌체크에요
+GLvoid GunCollision(int i, int j) // i'am 총알 충돌체크에요
 {
-
+    if ((build[i][j].x_trans - 0.6f) < bullet.x_trans_aoc && bullet.x_trans_aoc < (build[i][j].x_trans + 0.6f) && bullet.y_trans_aoc < build[i][j].y_scale / 5 - 0.2f && bullet.z_trans_aoc < (build[i][j].z_trans + 1) && bullet.z_trans_aoc > (build[i][j].z_trans - 1)) {
+        cout << "총알 충돌" << i << " : " << bullet.x_trans_aoc << ", " << bullet.y_trans_aoc << ", " << build[i][j].y_scale / 5 << "," << bullet.z_trans_aoc << ":::" << build[i][j].z_trans_aoc << '\n';
+        build[i][j].y_scale = 0;
+    }
 }
 
 int BUILDING_COUNT = 100;
@@ -291,7 +297,7 @@ GLvoid Building_Mat()  // i'am 빌딩 만들기이에요
             // B_Matrix = glm::translate(B_Matrix, glm::vec3(build[i][j].x_trans, 0.f, build[i][j].z_trans));
             B_Matrix = glm::translate(B_Matrix, glm::vec3(build[i][j].x_trans, 0.f, build[i][j].z_trans));
             B_Matrix = glm::scale(B_Matrix, glm::vec3(2.0f, build[i][j].y_scale, 4.0f));
-             unsigned int StransformLocation = glGetUniformLocation(s_program, "transform");
+            unsigned int StransformLocation = glGetUniformLocation(s_program, "transform");
             glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(B_Matrix));
             qobj = gluNewQuadric();
             gluQuadricDrawStyle(qobj, obj_type);
@@ -537,24 +543,35 @@ GLvoid Pilot_collison()  // i'am 헬기 충돌 체크에요 (vs 건물) 총알 �
 
 }
 
+bool bullet_flag = false;
 GLvoid Bullet() //i'am 총알이에요
 {
-    glm::mat4 Bullet = glm::mat4(1.0f);
-    Bullet = glm::translate(Bullet, glm::vec3(pilot.x_trans_aoc, pilot.y_trans_aoc, pilot.z_trans_aoc));
-    Bullet = glm::rotate(Bullet, glm::radians(bullet.x_rotate), glm::vec3(1.0f, 0.f, 0.f));
-    Bullet = glm::rotate(Bullet, glm::radians(bullet.z_rotate), glm::vec3(0.f, 0.f, 1.0f));
-    Bullet = glm::translate(Bullet, glm::vec3(0.f, 0.f, bullet.z_trans));
-    Bullet = glm::translate(Bullet, glm::vec3(0.f, 0.65f, 0.3f));
-    Bullet = glm::scale(Bullet, glm::vec3(0.3f, 0.3f, 0.4f));
-    unsigned int StransformLocation = glGetUniformLocation(s_program, "transform");
-    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(Bullet));
-    int objColorLocation = glGetUniformLocation(s_program, "objectColor");
-    unsigned isCheck = glGetUniformLocation(s_program, "isCheck");
-    qobj = gluNewQuadric();
-    gluQuadricDrawStyle(qobj, obj_type);
-    glUniform1f(isCheck, false);
-    glUniform3f(objColorLocation, 0.0f, 0.0f, 1.0f);
-    gluSphere(qobj, 0.2, 20, 30);
+    if (h_f.shoot_bullet) {
+        glm::mat4 Bullet = glm::mat4(1.0f);
+        if (bullet_flag) {
+            cout << "BGBGBG";
+            bullet.x_trans_aoc = pilot.x_trans_aoc;
+            bullet.y_trans_aoc = pilot.y_trans_aoc;
+            bullet.z_trans_aoc = pilot.z_trans_aoc;
+        }
+        bullet_flag = false;
+
+        Bullet = glm::translate(Bullet, glm::vec3(bullet.x_trans_aoc, bullet.y_trans_aoc, bullet.z_trans_aoc));
+        Bullet = glm::rotate(Bullet, glm::radians(bullet.x_rotate), glm::vec3(1.0f, 0.f, 0.f));
+        Bullet = glm::rotate(Bullet, glm::radians(bullet.z_rotate), glm::vec3(0.f, 0.f, 1.0f));
+        // Bullet = glm::translate(Bullet, glm::vec3(0.f, 0.f, bullet.z_trans));
+        // Bullet = glm::translate(Bullet, glm::vec3(0.f, 0.65f, 0.3f));
+        Bullet = glm::scale(Bullet, glm::vec3(0.3f, 0.3f, 0.4f));
+        unsigned int StransformLocation = glGetUniformLocation(s_program, "transform");
+        glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(Bullet));
+        int objColorLocation = glGetUniformLocation(s_program, "objectColor");
+        unsigned isCheck = glGetUniformLocation(s_program, "isCheck");
+        qobj = gluNewQuadric();
+        gluQuadricDrawStyle(qobj, obj_type);
+        glUniform1f(isCheck, false);
+        glUniform3f(objColorLocation, 0.0f, 0.0f, 1.0f);
+        gluSphere(qobj, 0.2, 20, 30);
+    }
 }
 
 
@@ -631,7 +648,6 @@ void drawScene()
         Pilot();
         Pilot_collison();
         Bullet();
-        Gun_collision();
         Ground();
         Building_Mat();
     }
@@ -665,7 +681,7 @@ GLvoid KeyBoardUp(unsigned char key, int x, int y) {
     glutPostRedisplay();
 }
 
-GLvoid KeyBoard(unsigned char key, int x, int y) 
+GLvoid KeyBoard(unsigned char key, int x, int y)
 {
     switch (key)
     {
@@ -686,7 +702,7 @@ GLvoid KeyBoard(unsigned char key, int x, int y)
         h_f.back_walk = true;
         break;
     case 'm':
-        h_f.left_turn = !h_f.left_turn;
+        h_f.game_start = !h_f.game_start;
         break;
     case 'c':
         memcpy(&pilot, &temp, sizeof(pilot));
@@ -703,6 +719,7 @@ GLvoid KeyBoard(unsigned char key, int x, int y)
         break;
     case ' ':
         h_f.shoot_bullet = true;
+        bullet_flag = true;
         break;
     }
     glutPostRedisplay();
@@ -715,7 +732,7 @@ GLvoid SpecialKeyBoard(int key, int x, int y)
 
 GLvoid SpecialKeyBoardUp(int key, int x, int y)
 {
-    switch (key) 
+    switch (key)
     {
     }
     glutPostRedisplay();
@@ -731,7 +748,7 @@ void Motion(int x, int y)
 
 }
 
-void MouseChange(int x, int y) 
+void MouseChange(int x, int y)
 {
 
 }
@@ -785,14 +802,14 @@ GLvoid Timer(int value) // get_events
 
     if (h_f.right_walk) {
         if (pilot.x_trans_aoc > -4)   // pilot이 최대 움직일 수 있는 공간
-            pilot.x_trans_aoc -= 0.05f;
+        pilot.x_trans_aoc -= 0.05f;
         if (pilot.z_rotate < 15)
-                pilot.z_rotate += 1.0f;
-        
+            pilot.z_rotate += 1.0f;
+
     }
     else if (h_f.left_walk) {
         if (pilot.x_trans_aoc < 4)    // pilot이 최대 움직일 수 있는 공간
-            pilot.x_trans_aoc += 0.05f; 
+        pilot.x_trans_aoc += 0.05f;
         if (pilot.z_rotate > -15)
             pilot.z_rotate -= 1.0f;
     }
@@ -824,26 +841,35 @@ GLvoid Timer(int value) // get_events
 
     // 총알 event
     if (h_f.shoot_bullet)
-        bullet.z_trans += 0.3f;
-    if (bullet.z_trans > 15) {
-        bullet.z_trans = 0;
+        bullet.z_trans_aoc += 0.3f;
+    if (bullet.z_trans_aoc > 15) {
+        bullet.z_trans_aoc = -10;
         h_f.shoot_bullet = false;
+        bullet_flag = false;
     }
 
-    std::uniform_real_distribution<float> random_building_come(0.000001, 0.6);
-    // 건물 다가오기
-    for (int i = 0; i < BUILDING_COUNT; ++i) {
-        for (int j = 0; j < BUILDING_COUNT_J; ++j) {
-            build[i][j].z_trans -= random_building_come(gen);
-            if (build[i][j].z_trans < 0.4f && build[i][j].z_trans > -0.1f)
-                CollisionCheck(i, j);
-            //if (build[i][j].z_trans < -30.8f) {  // 충돌 감지 해야하는 시점
-                //building_setting_flag = false;
-                // Building_Setting();
-                // build[i][j].z_trans = 40.f;
-             //}
+
+    if (h_f.game_start) {
+        std::uniform_real_distribution<float> random_building_come(0.000001, 0.4);
+        // 건물 다가오기
+        for (int i = 0; i < BUILDING_COUNT; ++i) {
+            for (int j = 0; j < BUILDING_COUNT_J; ++j) {
+                build[i][j].z_trans -= random_building_come(gen);
+                GunCollision(i, j);
+                if (build[i][j].z_trans < 0.4f && build[i][j].z_trans > -0.1f) {
+                    CollisionCheck(i, j);
+                }
+                    
+
+                //if (build[i][j].z_trans < -30.8f) {  // 충돌 감지 해야하는 시점
+                    //building_setting_flag = false;
+                    // Building_Setting();
+                    // build[i][j].z_trans = 40.f;
+                 //}
+            }
         }
     }
+
 
     // Building event
 
@@ -854,19 +880,22 @@ GLvoid Timer(int value) // get_events
 
 GLvoid BuildTimer(int value)
 {
-    for (int i = 0; i < BUILDING_COUNT; ++i) {
-        build[i][value].x_trans = random_building_x_pos(gen);
-        build[i][value].y_trans = 0;
-        build[i][value].y_scale = random_building_hight(gen);
-        build[i][value].z_trans = 40.0f;
+    if (h_f.game_start) {
+        for (int i = 0; i < BUILDING_COUNT; ++i) {
+            build[i][value].x_trans = random_building_x_pos(gen);
+            build[i][value].y_trans = 0;
+            build[i][value].y_scale = random_building_hight(gen);
+            build[i][value].z_trans = 40.0f;
 
-        /*cout << "빌딩 생성 위치 [" << i << "]" << '\n';
-        cout << "[x] : " << build[i][j].x_trans << '\n';
-        cout << "[y_scale] : " << build[i][j].y_scale << '\n';*/
+            /*cout << "빌딩 생성 위치 [" << i << "]" << '\n';
+            cout << "[x] : " << build[i][j].x_trans << '\n';
+            cout << "[y_scale] : " << build[i][j].y_scale << '\n';*/
+        }
+        value++;
+        if (value > BUILDING_COUNT_J)
+            value = 0;
+
+
     }
-    value++;
-    if (value > BUILDING_COUNT_J)
-        value = 0;
-
     glutTimerFunc(1000, BuildTimer, value);
 }
