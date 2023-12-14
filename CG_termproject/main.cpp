@@ -26,8 +26,7 @@ GLuint VAO[3], VBO[6];
 std::random_device rd;
 std::mt19937 gen(rd());
 std::uniform_real_distribution<> random_color(0.1, 1);
-std::uniform_real_distribution<float> random_building_x_pos(-3.0, 3.0);
-std::uniform_real_distribution<float> random_building_hight(1, 20);
+
 
 bool test = true;
 GLvoid drawScene();
@@ -367,18 +366,26 @@ GLint Collision(float first_x1, float first_x2, float last_x1, float last_x2)  /
     return 0;
 }
 
-float buildingHeight = rand() % 30 + 1; // 랜덤한 높이 설정
+void CollisionCheck(int i)
+{
+    // if ( pilot.x_trans_aoc < build[i][0].x_trans)
+    //cout << pilot.x_trans_aoc << ", " << build[i][0].x_trans << '\n';
+    if ((build[i][0].x_trans - 0.6f) < pilot.x_trans_aoc && pilot.x_trans_aoc < (build[i][0].x_trans + 0.6f) && pilot.y_trans_aoc < build[i][0].y_scale / 5 - 0.2f)
+        cout << "충돌" << i << " : " << pilot.x_trans_aoc << ", " << pilot.y_trans_aoc << ", " << build[i][0].y_scale / 5 << '\n';
+    
+    
+}
+
 GLvoid Building_Mat()  // i'am 빌딩 만들기이에요
 {
     glm::mat4 B_Matrix = glm::mat4(1.0f);
     for (int i = 0; i < 5; ++i) {       // 건물 갯수 최대 25개.
         for (int j = 0; j < 1; ++j) {
 
-
             glm::mat4 B_Matrix = glm::mat4(1.0f);
             // B_Matrix = glm::translate(B_Matrix, glm::vec3(build[i][j].x_trans, 0.f, build[i][j].z_trans));
             B_Matrix = glm::translate(B_Matrix, glm::vec3(build[i][j].x_trans, 0.f, build[i][j].z_trans));
-            B_Matrix = glm::scale(B_Matrix, glm::vec3(4.0f, build[i][j].y_scale, 4.0f));
+            B_Matrix = glm::scale(B_Matrix, glm::vec3(2.0f, build[i][j].y_scale, 4.0f));
              unsigned int StransformLocation = glGetUniformLocation(s_program, "transform");
             glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(B_Matrix));
             qobj = gluNewQuadric();
@@ -395,20 +402,24 @@ GLvoid Building_Mat()  // i'am 빌딩 만들기이에요
 }
 
 bool building_setting_flag = false;
+std::uniform_real_distribution<float> random_building_x_pos(-2.5, 2.5);
+std::uniform_real_distribution<float> random_building_hight(1, 25);
 GLvoid Building_Setting()  // i'am 빌딩들 랜덤 생성이에요
 {
+    cout << building_setting_flag;
     if (!building_setting_flag) {
-        cout << " !!!!!!!!!!!!! ";
-        for (int i = 0; i < 10; ++i) {
-            for (int j = 0; j < 10; ++j) {
-                build[i][j].x_trans = random_building_x_pos(gen); // -1 ~ 1
+        for (int i = 0; i < 5; ++i) {
+            for (int j = 0; j < 1; ++j) {
+                build[i][j].x_trans = random_building_x_pos(gen); // -2.5 ~ 2.5
                 build[i][j].y_trans = 0;
-                build[i][j].y_scale = random_building_hight(gen); // 1 ~ 20?
+                build[i][j].y_scale = random_building_hight(gen); // 1 ~ 25
                 build[i][j].z_trans = 40.0f;
+
+                cout << "빌딩 생성 위치 [" << i << "]" << '\n';
+                cout << "[x] : " << build[i][j].x_trans << '\n';
+                cout << "[y_scale] : " << build[i][j].y_scale << '\n';
             }
         }
-
-        cout << "Building position: " << h_f.x_max << ", " << h_f.z_max << '\n';
 
         building_setting_flag = true;
     }
@@ -646,7 +657,7 @@ GLvoid Gun_collision() // i'am 총알 충돌체크에요
 
 }
 
-GLvoid Ground() // i'am 지형이에요
+GLvoid Ground() // i'am Ground
 {
     glm::mat4 Bottom = glm::mat4(1.0f);
     Bottom = glm::scale(Bottom, glm::vec3(1000.0f, 0.f, 1000.0f));
@@ -803,13 +814,6 @@ GLvoid KeyBoard(unsigned char key, int x, int y)
 
 GLvoid SpecialKeyBoard(int key, int x, int y)
 {
-    switch (key)
-    {
-        case 32:
-            cout << " bullet ";
-            h_f.shoot_bullet = true;
-
-    }
     glutPostRedisplay();
 }
 
@@ -883,25 +887,27 @@ GLvoid Timer(int value) // get_events
     }
 
     if (h_f.right_walk) {
-        if (pilot.x_trans_aoc > -2.5) {
+        if (pilot.x_trans_aoc > -4)   // pilot이 최대 움직일 수 있는 공간
             pilot.x_trans_aoc -= 0.05f;
-            if (pilot.z_rotate < 15)
+        if (pilot.z_rotate < 15)
                 pilot.z_rotate += 1.0f;
-        }
+        
     }
     else if (h_f.left_walk) {
-        if (pilot.x_trans_aoc < 2.5)
+        if (pilot.x_trans_aoc < 4)    // pilot이 최대 움직일 수 있는 공간
             pilot.x_trans_aoc += 0.05f; 
         if (pilot.z_rotate > -15)
             pilot.z_rotate -= 1.0f;
     }
     else if (h_f.back_walk) {
-        pilot.y_trans_aoc -= 0.03f;
+        if (pilot.y_trans_aoc > 0)      // pilot이 최대 내려갈 수 있는 공간 
+            pilot.y_trans_aoc -= 0.03f;
         if (pilot.x_rotate > -15)
             pilot.x_rotate -= 1.0f;
     }
     else if (h_f.front_walk) {
-        pilot.y_trans_aoc += 0.03f;
+        if (pilot.y_trans_aoc < 4)      // pilot이 최대 올라갈 수 있는 공간 
+            pilot.y_trans_aoc += 0.03f;
         if (pilot.x_rotate < 15)
             pilot.x_rotate += 1.0f;
     }
@@ -929,16 +935,19 @@ GLvoid Timer(int value) // get_events
 
     // 건물 다가오기
     for (int i = 0; i < 5; ++i) {
-        for (int j = 0; j < 5; ++j) {
+        for (int j = 0; j < 1; ++j) {
             build[i][j].z_trans -= 0.2f;
-            if (build[i][j].z_trans < -3.8f)
+            if (build[i][j].z_trans < 0.4f && build[i][j].z_trans > -0.1f)
+                CollisionCheck(i);
+            if (build[i][j].z_trans < -3.8f) {  // 충돌 감지 해야하는 시점
+                building_setting_flag = false;
+                Building_Setting();
                 build[i][j].z_trans = 40.f;
-                // building_setting_flag = false;
+            }
         }
     }
 
     // Building event
-
 
     glutPostRedisplay();
     glutTimerFunc(5, Timer, 1);
