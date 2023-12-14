@@ -11,6 +11,7 @@
 #include <gl/glm/gtc/matrix_transform.hpp>
 #include <random>
 #include <string>
+#include <chrono>
 
 
 #define width 1200
@@ -27,6 +28,7 @@ std::random_device rd;
 std::mt19937 gen(rd());
 std::uniform_real_distribution<> random_color(0.1, 1);
 
+auto start_time = chrono::high_resolution_clock::now();
 
 bool test = true;
 GLvoid drawScene();
@@ -245,11 +247,11 @@ GLvoid InitBuffer()
     glEnableVertexAttribArray(0);
 
 
-    glUseProgram(s_program);
-    unsigned int lightPosLocation = glGetUniformLocation(s_program, "lightPos"); //--- lightPos 값 전달: (0.0, 0.0, 5.0);
-    glUniform3f(lightPosLocation, 5.0f, 10.0f, 0.0f);
-    unsigned int lightColorLocation = glGetUniformLocation(s_program, "lightColor"); //--- lightColor 값 전달: (1.0, 1.0, 1.0) 백색
-    glUniform3f(lightColorLocation, 1.0f, 1.0f, 1.0f);
+    //glUseProgram(s_program);
+    //unsigned int lightPosLocation = glGetUniformLocation(s_program, "lightPos"); //--- lightPos 값 전달: (0.0, 0.0, 5.0);
+    //glUniform3f(lightPosLocation, 5.0f, 10.0f, 0.0f);
+    //unsigned int lightColorLocation = glGetUniformLocation(s_program, "lightColor"); //--- lightColor 값 전달: (1.0, 1.0, 1.0) 백색
+    //glUniform3f(lightColorLocation, 1.0f, 1.0f, 1.0f);
     //unsigned int objColorLocation = glGetUniformLocation(s_program, "objectColor"); //--- object Color값 전달: (1.0, 0.5, 0.3)의 색
     //glUniform3f(objColorLocation, 0.7f, 0.7f, 0.4f);
 }
@@ -270,7 +272,11 @@ GLint Collision(float first_x1, float first_x2, float last_x1, float last_x2)  /
 GLvoid CollisionCheck(int i, int j)
 {
     if ((build[i][j].x_trans - 0.6f) < pilot.x_trans_aoc && pilot.x_trans_aoc < (build[i][j].x_trans + 0.6f) && pilot.y_trans_aoc < build[i][j].y_scale / 5 - 0.2f) {
-
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+        double elapsed_seconds = duration.count() * 1e-6;
+        std::cout << "Elapsed Time: " << elapsed_seconds << " seconds." << std::endl;
+        start_time = std::chrono::high_resolution_clock::now();
     }
         // cout << "충돌" << i << " : " << pilot.x_trans_aoc << ", " << pilot.y_trans_aoc << ", " << build[i][j].y_scale / 5 << '\n';
     
@@ -281,7 +287,7 @@ GLvoid CollisionCheck(int i, int j)
 GLvoid GunCollision(int i, int j) // i'am 총알 충돌체크에요
 {
     if ((build[i][j].x_trans - 0.6f) < bullet.x_trans_aoc && bullet.x_trans_aoc < (build[i][j].x_trans + 0.6f) && bullet.y_trans_aoc < build[i][j].y_scale / 5 - 0.2f && bullet.z_trans_aoc < (build[i][j].z_trans + 1) && bullet.z_trans_aoc > (build[i][j].z_trans - 1)) {
-        cout << "총알 충돌" << i << " : " << bullet.x_trans_aoc << ", " << bullet.y_trans_aoc << ", " << build[i][j].y_scale / 5 << "," << bullet.z_trans_aoc << ":::" << build[i][j].z_trans_aoc << '\n';
+        // cout << "총알 충돌" << i << " : " << bullet.x_trans_aoc << ", " << bullet.y_trans_aoc << ", " << build[i][j].y_scale / 5 << "," << bullet.z_trans_aoc << ":::" << build[i][j].z_trans_aoc << '\n';
         build[i][j].y_scale = 0;
     }
 }
@@ -318,7 +324,7 @@ std::uniform_real_distribution<float> random_building_hight(1, 25);
 
 GLvoid Building_Setting()  // i'am 빌딩들 랜덤 생성이에요
 {
-    cout << building_setting_flag;
+    // cout << building_setting_flag;
     if (!building_setting_flag) {
         for (int i = 0; i < BUILDING_COUNT; ++i) {
             for (int j = 0; j < 1; ++j) {
@@ -549,7 +555,6 @@ GLvoid Bullet() //i'am 총알이에요
     if (h_f.shoot_bullet) {
         glm::mat4 Bullet = glm::mat4(1.0f);
         if (bullet_flag) {
-            cout << "BGBGBG";
             bullet.x_trans_aoc = pilot.x_trans_aoc;
             bullet.y_trans_aoc = pilot.y_trans_aoc;
             bullet.z_trans_aoc = pilot.z_trans_aoc;
@@ -645,6 +650,13 @@ void drawScene()
         unsigned int projectionLocation = glGetUniformLocation(s_program, "projection");
         glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projection[0][0]);
 
+        glUseProgram(s_program);
+        unsigned int lightPosLocation = glGetUniformLocation(s_program, "lightPos"); //--- lightPos 값 전달: (0.0, 0.0, 5.0);
+        glUniform3f(lightPosLocation, pilot.x_trans_aoc, pilot.y_trans_aoc, 0.f);
+        unsigned int lightColorLocation = glGetUniformLocation(s_program, "lightColor"); //--- lightColor 값 전달: (1.0, 1.0, 1.0) 백색
+        glUniform3f(lightColorLocation, 1.0f, 1.0f, 1.0f);
+        // cout << pilot.x_trans_aoc << '\n';
+
         Pilot();
         Pilot_collison();
         Bullet();
@@ -711,11 +723,11 @@ GLvoid KeyBoard(unsigned char key, int x, int y)
         break;
     case '1':
         h_f.first_see = true;
-        cout << "1인칭" << endl;
+        // cout << "1인칭" << endl;
         break;
     case '3':
         h_f.first_see = false;
-        cout << "3인칭" << endl;
+        // cout << "3인칭" << endl;
         break;
     case ' ':
         h_f.shoot_bullet = true;
