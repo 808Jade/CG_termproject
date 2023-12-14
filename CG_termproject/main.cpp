@@ -26,6 +26,8 @@ GLuint VAO[3], VBO[6];
 std::random_device rd;
 std::mt19937 gen(rd());
 std::uniform_real_distribution<> random_color(0.1, 1);
+std::uniform_real_distribution<float> random_building_x_pos(-3.0, 3.0);
+std::uniform_real_distribution<float> random_building_hight(1, 20);
 
 bool test = true;
 GLvoid drawScene();
@@ -369,14 +371,14 @@ float buildingHeight = rand() % 30 + 1; // 랜덤한 높이 설정
 GLvoid Building_Mat()  // i'am 빌딩 만들기이에요
 {
     glm::mat4 B_Matrix = glm::mat4(1.0f);
-    for (int i = 0; i < 5; ++i) {       // 건물 갯수 최대 50개.
-        for (int j = 0; j < 5; ++j) {
+    for (int i = 0; i < 5; ++i) {       // 건물 갯수 최대 25개.
+        for (int j = 0; j < 1; ++j) {
 
 
             glm::mat4 B_Matrix = glm::mat4(1.0f);
             // B_Matrix = glm::translate(B_Matrix, glm::vec3(build[i][j].x_trans, 0.f, build[i][j].z_trans));
             B_Matrix = glm::translate(B_Matrix, glm::vec3(build[i][j].x_trans, 0.f, build[i][j].z_trans));
-            B_Matrix = glm::scale(B_Matrix, glm::vec3(4.0f, 1.f, 4.0f));
+            B_Matrix = glm::scale(B_Matrix, glm::vec3(4.0f, build[i][j].y_scale, 4.0f));
              unsigned int StransformLocation = glGetUniformLocation(s_program, "transform");
             glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(B_Matrix));
             qobj = gluNewQuadric();
@@ -399,9 +401,9 @@ GLvoid Building_Setting()  // i'am 빌딩들 랜덤 생성이에요
         cout << " !!!!!!!!!!!!! ";
         for (int i = 0; i < 10; ++i) {
             for (int j = 0; j < 10; ++j) {
-                build[i][j].x_trans = rand()%100+1; // -1 ~ 1
+                build[i][j].x_trans = random_building_x_pos(gen); // -1 ~ 1
                 build[i][j].y_trans = 0;
-                build[i][j].y_scale = rand(); // 1 ~ 20?
+                build[i][j].y_scale = random_building_hight(gen); // 1 ~ 20?
                 build[i][j].z_trans = 40.0f;
             }
         }
