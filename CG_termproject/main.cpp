@@ -36,6 +36,7 @@ GLvoid KeyBoardUp(unsigned char, int, int);
 GLvoid SpecialKeyBoard(int, int, int);
 GLvoid SpecialKeyBoardUp(int, int, int);
 GLvoid Timer(int);
+GLvoid BuildTimer(int);
 
 float bottom[] =
 {
@@ -224,107 +225,6 @@ void InitShader()
     glUseProgram(s_program);
 }
 
-void ReadObj(const std::string objfilename, std::vector<glm::vec3>& vertex, std::vector<glm::vec3>& normalVertex, std::vector<glm::vec2>& vtVertex)
-{
-    int lineCount = 0;
-    std::string line;
-    std::string check[6];
-    int vertexNum = 0;
-    int normalNum = 0;
-    int cordiNum = 0;
-    std::ifstream inFile(objfilename);
-    std::vector<glm::vec4>face;
-    std::vector<glm::vec4>Noramlface;
-    std::vector<glm::vec4>vtface;
-    while (std::getline(inFile, line)) {
-        if (line[0] == 'v' && line[1] == ' ') {
-            vertexNum++;
-        }
-        if (line[0] == 'v' && line[1] == 'n') {
-            normalNum++;
-        }
-        if (line[0] == 'v' && line[1] == 't') {
-            cordiNum++;
-        }
-        std::cout << line << std::endl;
-    }
-    glm::vec4* vertexData = new glm::vec4[vertexNum];
-    glm::vec4* normalData = new glm::vec4[normalNum];
-    glm::vec2* cordinaterData = new glm::vec2[cordiNum];
-
-    inFile.clear();
-    inFile.seekg(0, std::ios::beg);
-    vertexNum = 0;
-    normalNum = 0;
-    cordiNum = 0;
-    char head[2];
-    int faceNum[3];
-    int vnNum[3];
-    int vtNum[3];
-    std::string nt;
-    char n;
-    char s;
-    while (inFile >> std::noskipws >> head[0]) {
-        if (head[0] == 'v') {
-            inFile >> std::noskipws >> head[1];
-            if (head[1] == ' ') {
-                inFile >> std::skipws >> vertexData[vertexNum].x >> vertexData[vertexNum].y >> vertexData[vertexNum].z;
-                vertexNum++;
-            }
-            else if (head[1] == 'n') {
-                inFile >> std::skipws >> normalData[normalNum].x >> normalData[normalNum].y >> normalData[normalNum].z;
-                normalNum++;
-            }
-            else if (head[1] == 't') {
-                float trash;
-                inFile >> std::skipws >> cordinaterData[cordiNum].x >> cordinaterData[cordiNum].y >> trash;
-                cordiNum++;
-            }
-            head[1] = '\0';
-        }
-        if (head[0] == 'f') {
-            inFile >> std::noskipws >> head[1];
-            if (head[1] == ' ') {
-                for (int i = 0; i < 3; ++i) {
-                    inFile >> std::skipws >> faceNum[i] >> std::noskipws >> n >> vtNum[i] >> std::noskipws >> s >> vnNum[i];
-                    // 4개의 인덱스를 처리하려면 위 줄을 주석 해제하고, 아래 주석 처리된 줄을 사용하세요.
-                    // inFile >> std::skipws >> faceNum[i] >> std::noskipws >> n >> vtNum[i] >> std::noskipws >> s >> vnNum[i] >> std::noskipws >> trash;
-                }
-
-                glm::vec4 temp = glm::vec4(faceNum[0], faceNum[1], faceNum[2], 1);//faceNum[3]
-                glm::vec4 vttemp = glm::vec4(vtNum[0], vtNum[1], vtNum[2], 1); //vtNum[3]
-                glm::vec4 vntemp = glm::vec4(vnNum[0], vnNum[1], vnNum[2], 1);//vnNum[3]
-                face.push_back(temp);
-                vtface.push_back(vttemp);
-                Noramlface.push_back(vntemp);
-            }
-            head[1] = '\0';
-        }
-    }
-    for (auto iter = face.begin(); iter < face.end(); iter++) {
-        vertex.push_back(vertexData[(int)(iter->x) - 1]);
-        vertex.push_back(vertexData[(int)(iter->y) - 1]);
-        vertex.push_back(vertexData[(int)(iter->z) - 1]);                     //버텍스 좌표
-        //vertex.push_back(vertexData[(int)(iter->w) - 1]);
-    }
-    for (auto iter = vtface.begin(); iter < vtface.end(); iter++) {
-        vtVertex.push_back(cordinaterData[(int)(iter->x) - 1]);
-        vtVertex.push_back(cordinaterData[(int)(iter->y) - 1]);
-        vtVertex.push_back(cordinaterData[(int)(iter->z) - 1]);                //텍스쳐 좌표
-        //ve``rtex.push_back(vertexData[(int)(iter->w) - 1]);
-    }
-    for (auto iter = Noramlface.begin(); iter < Noramlface.end(); iter++) {
-        normalVertex.push_back(normalData[(int)(iter->x) - 1]);
-        normalVertex.push_back(normalData[(int)(iter->y) - 1]);
-        normalVertex.push_back(normalData[(int)(iter->z) - 1]);               //노멀 좌표
-        //normalVertex.push_back(normalData[(int)(iter->w) - 1]);
-    }
-    delete[] vertexData;
-    delete[] cordinaterData;
-    delete[] normalData;
-    inFile.close();
-}
-
 GLvoid InitBuffer()
 {
     glGenVertexArrays(3, VAO);
@@ -366,22 +266,27 @@ GLint Collision(float first_x1, float first_x2, float last_x1, float last_x2)  /
     return 0;
 }
 
-void CollisionCheck(int i)
+void CollisionCheck(int i, int j)
 {
-    // if ( pilot.x_trans_aoc < build[i][0].x_trans)
-    //cout << pilot.x_trans_aoc << ", " << build[i][0].x_trans << '\n';
-    if ((build[i][0].x_trans - 0.6f) < pilot.x_trans_aoc && pilot.x_trans_aoc < (build[i][0].x_trans + 0.6f) && pilot.y_trans_aoc < build[i][0].y_scale / 5 - 0.2f)
-        cout << "충돌" << i << " : " << pilot.x_trans_aoc << ", " << pilot.y_trans_aoc << ", " << build[i][0].y_scale / 5 << '\n';
+    if ((build[i][j].x_trans - 0.6f) < pilot.x_trans_aoc && pilot.x_trans_aoc < (build[i][j].x_trans + 0.6f) && pilot.y_trans_aoc < build[i][j].y_scale / 5 - 0.2f)
+        cout << "충돌" << i << " : " << pilot.x_trans_aoc << ", " << pilot.y_trans_aoc << ", " << build[i][j].y_scale / 5 << '\n';
     
     
 }
 
+
+GLvoid Gun_collision() // i'am 총알 충돌체크에요
+{
+
+}
+
+int BUILDING_COUNT = 100;
+int BUILDING_COUNT_J = 10;
 GLvoid Building_Mat()  // i'am 빌딩 만들기이에요
 {
     glm::mat4 B_Matrix = glm::mat4(1.0f);
-    for (int i = 0; i < 5; ++i) {       // 건물 갯수 최대 25개.
-        for (int j = 0; j < 1; ++j) {
-
+    for (int i = 0; i < BUILDING_COUNT; ++i) {
+        for (int j = 0; j < BUILDING_COUNT_J; ++j) {
             glm::mat4 B_Matrix = glm::mat4(1.0f);
             // B_Matrix = glm::translate(B_Matrix, glm::vec3(build[i][j].x_trans, 0.f, build[i][j].z_trans));
             B_Matrix = glm::translate(B_Matrix, glm::vec3(build[i][j].x_trans, 0.f, build[i][j].z_trans));
@@ -402,25 +307,25 @@ GLvoid Building_Mat()  // i'am 빌딩 만들기이에요
 }
 
 bool building_setting_flag = false;
-std::uniform_real_distribution<float> random_building_x_pos(-2.5, 2.5);
+std::uniform_real_distribution<float> random_building_x_pos(-20, 20);
 std::uniform_real_distribution<float> random_building_hight(1, 25);
+
 GLvoid Building_Setting()  // i'am 빌딩들 랜덤 생성이에요
 {
     cout << building_setting_flag;
     if (!building_setting_flag) {
-        for (int i = 0; i < 5; ++i) {
+        for (int i = 0; i < BUILDING_COUNT; ++i) {
             for (int j = 0; j < 1; ++j) {
                 build[i][j].x_trans = random_building_x_pos(gen); // -2.5 ~ 2.5
                 build[i][j].y_trans = 0;
                 build[i][j].y_scale = random_building_hight(gen); // 1 ~ 25
                 build[i][j].z_trans = 40.0f;
 
-                cout << "빌딩 생성 위치 [" << i << "]" << '\n';
+                /*cout << "빌딩 생성 위치 [" << i << "]" << '\n';
                 cout << "[x] : " << build[i][j].x_trans << '\n';
-                cout << "[y_scale] : " << build[i][j].y_scale << '\n';
+                cout << "[y_scale] : " << build[i][j].y_scale << '\n';*/
             }
         }
-
         building_setting_flag = true;
     }
 }
@@ -652,10 +557,6 @@ GLvoid Bullet() //i'am 총알이에요
     gluSphere(qobj, 0.2, 20, 30);
 }
 
-GLvoid Gun_collision() // i'am 총알 충돌체크에요
-{
-
-}
 
 GLvoid Ground() // i'am Ground
 {
@@ -697,13 +598,14 @@ void drawScene()
                 view = glm::translate(view, glm::vec3(-pilot.x_trans - pilot.x_trans_aoc, 0.0f, pilot.z_trans));
             }
             else { // 일인칭 시점
-                glm::vec3 cameraPos = glm::vec3(-pilot.x_trans - pilot.x_trans_aoc, 0.1f, -pilot.z_trans - pilot.z_trans_aoc);
-                glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, -1.0f);
+                glm::vec3 cameraPos = glm::vec3(0.f, 0.5f, 5.7f);
+                glm::vec3 cameraDirection = glm::vec3(0.0f, 0.5f, 5.95f);
                 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
-                view = glm::lookAt(cameraPos, cameraPos + cameraDirection, cameraUp);
+                view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
                 view = glm::rotate(view, glm::radians(-10.0f), glm::vec3(1.0f, 0.0f, 0.0f));
                 view = glm::rotate(view, glm::radians(-pilot.y_rotate), glm::vec3(0.0f, 1.0f, 0.0f));
+                view = glm::translate(view, glm::vec3(-pilot.x_trans_aoc, -pilot.y_trans_aoc, -pilot.z_trans_aoc));
             }
 
             projection = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 50.0f);
@@ -711,8 +613,8 @@ void drawScene()
         }
         else { // 미니맵
             glViewport(1050, 550, 150, 150);
-            glm::vec3 cameraPos = glm::vec3(pilot.x_trans, 5.0f, pilot.z_trans);
-            glm::vec3 cameraDirection = glm::vec3(pilot.x_trans, 0.0f, pilot.z_trans);
+            glm::vec3 cameraPos = glm::vec3(pilot.x_trans_aoc, 5.0f, pilot.z_trans);
+            glm::vec3 cameraDirection = glm::vec3(pilot.x_trans_aoc, 0.0f, pilot.z_trans);
             glm::vec3 cameraUp = glm::vec3(0.0f, 0.0f, 10.0f);
 
             view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
@@ -770,12 +672,6 @@ GLvoid KeyBoard(unsigned char key, int x, int y)
     case 'q':
         exit(0);
         cout << "exit program" << '\n';
-        break;
-    case 'x':
-        h_f.x_is_trans = !h_f.x_is_trans;
-        break;
-    case 'y':
-        h_f.z_is_trans = !h_f.z_is_trans;
         break;
     case 'd':
         h_f.right_walk = true;
@@ -870,6 +766,7 @@ void main(int argc, char** argv) {
     glutTimerFunc(5, Timer, 1);
 
     Building_Setting();
+    glutTimerFunc(1000, BuildTimer, 1);
     Building_Mat();
 
     glutMainLoop();
@@ -933,17 +830,18 @@ GLvoid Timer(int value) // get_events
         h_f.shoot_bullet = false;
     }
 
+    std::uniform_real_distribution<float> random_building_come(0.000001, 0.6);
     // 건물 다가오기
-    for (int i = 0; i < 5; ++i) {
-        for (int j = 0; j < 1; ++j) {
-            build[i][j].z_trans -= 0.2f;
+    for (int i = 0; i < BUILDING_COUNT; ++i) {
+        for (int j = 0; j < BUILDING_COUNT_J; ++j) {
+            build[i][j].z_trans -= random_building_come(gen);
             if (build[i][j].z_trans < 0.4f && build[i][j].z_trans > -0.1f)
-                CollisionCheck(i);
-            if (build[i][j].z_trans < -3.8f) {  // 충돌 감지 해야하는 시점
-                building_setting_flag = false;
-                Building_Setting();
-                build[i][j].z_trans = 40.f;
-            }
+                CollisionCheck(i, j);
+            //if (build[i][j].z_trans < -30.8f) {  // 충돌 감지 해야하는 시점
+                //building_setting_flag = false;
+                // Building_Setting();
+                // build[i][j].z_trans = 40.f;
+             //}
         }
     }
 
@@ -951,4 +849,24 @@ GLvoid Timer(int value) // get_events
 
     glutPostRedisplay();
     glutTimerFunc(5, Timer, 1);
+
+}
+
+GLvoid BuildTimer(int value)
+{
+    for (int i = 0; i < BUILDING_COUNT; ++i) {
+        build[i][value].x_trans = random_building_x_pos(gen);
+        build[i][value].y_trans = 0;
+        build[i][value].y_scale = random_building_hight(gen);
+        build[i][value].z_trans = 40.0f;
+
+        /*cout << "빌딩 생성 위치 [" << i << "]" << '\n';
+        cout << "[x] : " << build[i][j].x_trans << '\n';
+        cout << "[y_scale] : " << build[i][j].y_scale << '\n';*/
+    }
+    value++;
+    if (value > BUILDING_COUNT_J)
+        value = 0;
+
+    glutTimerFunc(1000, BuildTimer, value);
 }
