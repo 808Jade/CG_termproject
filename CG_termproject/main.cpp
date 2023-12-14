@@ -19,6 +19,7 @@
 #define h_vertex 0.2f
 #define pi 3.141592
 using namespace std;
+auto start_time = chrono::high_resolution_clock::now();
 
 GLUquadricObj* qobj;
 GLuint s_program;
@@ -27,8 +28,6 @@ GLuint VAO[3], VBO[6];
 std::random_device rd;
 std::mt19937 gen(rd());
 std::uniform_real_distribution<> random_color(0.1, 1);
-
-auto start_time = chrono::high_resolution_clock::now();
 
 bool test = true;
 GLvoid drawScene();
@@ -272,11 +271,15 @@ GLint Collision(float first_x1, float first_x2, float last_x1, float last_x2)  /
 GLvoid CollisionCheck(int i, int j)
 {
     if ((build[i][j].x_trans - 0.6f) < pilot.x_trans_aoc && pilot.x_trans_aoc < (build[i][j].x_trans + 0.6f) && pilot.y_trans_aoc < build[i][j].y_scale / 5 - 0.2f) {
-        auto end_time = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-        double elapsed_seconds = duration.count() * 1e-6;
-        std::cout << "Elapsed Time: " << elapsed_seconds << " seconds." << std::endl;
-        start_time = std::chrono::high_resolution_clock::now();
+        memcpy(&pilot, &temp, sizeof(pilot));
+ memcpy(&camera, &temp, sizeof(camera));
+ memcpy(&h_f, &temp_f, sizeof(h_f));
+ cout << "충돌" << i << " : " << pilot.x_trans_aoc << ", " << pilot.y_trans_aoc << ", " << build[i][j].y_scale / 5 << '\n';
+ auto end_time = std::chrono::high_resolution_clock::now();
+ auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+ double elapsed_seconds = duration.count() * 1e-6;
+ std::cout << "Elapsed Time: " << elapsed_seconds << " seconds." << std::endl;
+ start_time = std::chrono::high_resolution_clock::now();
     }
         // cout << "충돌" << i << " : " << pilot.x_trans_aoc << ", " << pilot.y_trans_aoc << ", " << build[i][j].y_scale / 5 << '\n';
     
@@ -310,7 +313,7 @@ GLvoid Building_Mat()  // i'am 빌딩 만들기이에요
             int objColorLocation = glGetUniformLocation(s_program, "objectColor");
             unsigned isCheck = glGetUniformLocation(s_program, "isCheck");
             glUniform1f(isCheck, false);
-            glm::vec4 cubeColor = glm::vec4(0.0f, 0.0f, 0.5f, 1.0f); // 색상을 원하는 값으로 설정
+            glm::vec4 cubeColor = glm::vec4(1.0f, 0.0f, 0.5f, 1.0f); // 색상을 원하는 값으로 설정
             glUniform3f(objColorLocation, cubeColor.r, cubeColor.g, cubeColor.b);
             glBindVertexArray(VAO[0]);
             glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -574,7 +577,7 @@ GLvoid Bullet() //i'am 총알이에요
         qobj = gluNewQuadric();
         gluQuadricDrawStyle(qobj, obj_type);
         glUniform1f(isCheck, false);
-        glUniform3f(objColorLocation, 0.0f, 0.0f, 1.0f);
+        glUniform3f(objColorLocation, 1.0f, 1.0f, 1.0f);
         gluSphere(qobj, 0.2, 20, 30);
     }
 }
@@ -650,12 +653,20 @@ void drawScene()
         unsigned int projectionLocation = glGetUniformLocation(s_program, "projection");
         glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projection[0][0]);
 
+        float lightInitialX = 0;
+        float lightInitialY = 10;
+        float lightInitialZ = 40.f;
+        float lightRotationAngle = glm::radians(0.0f);
+        glm::vec4 lightPosition(lightInitialX, lightInitialY, lightInitialZ, 1.0f);
+        lightPosition = glm::rotate(glm::mat4(1.0f), lightRotationAngle, glm::vec3(1.0f, 0.0f, 0.0f)) * lightPosition;
         glUseProgram(s_program);
         unsigned int lightPosLocation = glGetUniformLocation(s_program, "lightPos"); //--- lightPos 값 전달: (0.0, 0.0, 5.0);
-        glUniform3f(lightPosLocation, pilot.x_trans_aoc, pilot.y_trans_aoc, 0.f);
+        glUniform3f(lightPosLocation, lightPosition.x, lightPosition.y, lightPosition.z);
+        // glUniform3f(lightPosLocation, 4, 10, 10.f);
+        // glUniform3f(lightPosLocation, pilot.x_trans_aoc * 10, pilot.y_trans_aoc * 10, 0.5f);
         unsigned int lightColorLocation = glGetUniformLocation(s_program, "lightColor"); //--- lightColor 값 전달: (1.0, 1.0, 1.0) 백색
-        glUniform3f(lightColorLocation, 1.0f, 1.0f, 1.0f);
-        // cout << pilot.x_trans_aoc << '\n';
+        glUniform3f(lightColorLocation, 0.5f, 0.5f, 0.5f);
+        cout << pilot.x_trans_aoc << '\n';
 
         Pilot();
         Pilot_collison();
