@@ -272,14 +272,14 @@ GLvoid CollisionCheck(int i, int j)
 {
     if ((build[i][j].x_trans - 0.6f) < pilot.x_trans_aoc && pilot.x_trans_aoc < (build[i][j].x_trans + 0.6f) && pilot.y_trans_aoc < build[i][j].y_scale / 5 - 0.2f) {
         memcpy(&pilot, &temp, sizeof(pilot));
- memcpy(&camera, &temp, sizeof(camera));
- memcpy(&h_f, &temp_f, sizeof(h_f));
- cout << "충돌" << i << " : " << pilot.x_trans_aoc << ", " << pilot.y_trans_aoc << ", " << build[i][j].y_scale / 5 << '\n';
- auto end_time = std::chrono::high_resolution_clock::now();
- auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
- double elapsed_seconds = duration.count() * 1e-6;
- std::cout << "Elapsed Time: " << elapsed_seconds << " seconds." << std::endl;
- start_time = std::chrono::high_resolution_clock::now();
+         memcpy(&camera, &temp, sizeof(camera));
+         memcpy(&h_f, &temp_f, sizeof(h_f));
+         // cout << "충돌" << i << " : " << pilot.x_trans_aoc << ", " << pilot.y_trans_aoc << ", " << build[i][j].y_scale / 5 << '\n';
+         auto end_time = std::chrono::high_resolution_clock::now();
+         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+         double elapsed_seconds = duration.count() * 1e-6;
+         std::cout << "생존 시간: " << elapsed_seconds << " 초!" << std::endl;
+         start_time = std::chrono::high_resolution_clock::now();
     }
         // cout << "충돌" << i << " : " << pilot.x_trans_aoc << ", " << pilot.y_trans_aoc << ", " << build[i][j].y_scale / 5 << '\n';
     
@@ -655,7 +655,7 @@ void drawScene()
 
         float lightInitialX = 0;
         float lightInitialY = 10;
-        float lightInitialZ = 40.f;
+        float lightInitialZ = 20.f;
         float lightRotationAngle = glm::radians(0.0f);
         glm::vec4 lightPosition(lightInitialX, lightInitialY, lightInitialZ, 1.0f);
         lightPosition = glm::rotate(glm::mat4(1.0f), lightRotationAngle, glm::vec3(1.0f, 0.0f, 0.0f)) * lightPosition;
@@ -665,8 +665,8 @@ void drawScene()
         // glUniform3f(lightPosLocation, 4, 10, 10.f);
         // glUniform3f(lightPosLocation, pilot.x_trans_aoc * 10, pilot.y_trans_aoc * 10, 0.5f);
         unsigned int lightColorLocation = glGetUniformLocation(s_program, "lightColor"); //--- lightColor 값 전달: (1.0, 1.0, 1.0) 백색
-        glUniform3f(lightColorLocation, 0.5f, 0.5f, 0.5f);
-        cout << pilot.x_trans_aoc << '\n';
+        glUniform3f(lightColorLocation, 0.7f, 0.7f, 0.7f);
+        // cout << pilot.x_trans_aoc << '\n';
 
         Pilot();
         Pilot_collison();
