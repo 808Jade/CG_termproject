@@ -369,26 +369,16 @@ float buildingHeight = rand() % 30 + 1; // 랜덤한 높이 설정
 GLvoid Building_Mat()  // i'am 빌딩 만들기이에요
 {
     glm::mat4 B_Matrix = glm::mat4(1.0f);
-    for (int i = 0; i < h_f.x_max; ++i) {
-        for (int j = 0; j < h_f.z_max; ++j) {
+    for (int i = 0; i < 5; ++i) {       // 건물 갯수 최대 50개.
+        for (int j = 0; j < 5; ++j) {
 
 
             glm::mat4 B_Matrix = glm::mat4(1.0f);
+            // B_Matrix = glm::translate(B_Matrix, glm::vec3(build[i][j].x_trans, 0.f, build[i][j].z_trans));
             B_Matrix = glm::translate(B_Matrix, glm::vec3(build[i][j].x_trans, 0.f, build[i][j].z_trans));
-            B_Matrix = glm::translate(B_Matrix, glm::vec3(0.f, 0.f, 0.f));
-            B_Matrix = glm::scale(B_Matrix, glm::vec3(4.0f, buildingHeight, 4.0f));
-
-            //// 윗면
-            //B_Matrix = glm::translate(B_Matrix, glm::vec3(build[i][j].x_trans, 0.f, build[i][j].z_trans));
-            //// 랜덤한 높이 설정
-            //B_Matrix = glm::translate(B_Matrix, glm::vec3(build[i][j].x_trans, buildingHeight * 0.5f, build[i][j].z_trans));
-            //B_Matrix = glm::scale(B_Matrix, glm::vec3(4.0f, buildingHeight, 4.0f));
-            //B_Matrix = glm::rotate(B_Matrix, glm::radians(pilot.y_rotate_aoc), glm::vec3(0.0f, 1.0f, 0.0f));  // only engin ans wings
-            //B_Matrix = glm::rotate(B_Matrix, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
-            //B_Matrix = glm::rotate(B_Matrix, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
-            unsigned int StransformLocation = glGetUniformLocation(s_program, "transform");
+            B_Matrix = glm::scale(B_Matrix, glm::vec3(4.0f, 1.f, 4.0f));
+             unsigned int StransformLocation = glGetUniformLocation(s_program, "transform");
             glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(B_Matrix));
-
             qobj = gluNewQuadric();
             gluQuadricDrawStyle(qobj, obj_type);
             int objColorLocation = glGetUniformLocation(s_program, "objectColor");
@@ -398,36 +388,6 @@ GLvoid Building_Mat()  // i'am 빌딩 만들기이에요
             glUniform3f(objColorLocation, cubeColor.r, cubeColor.g, cubeColor.b);
             glBindVertexArray(VAO[0]);
             glDrawArrays(GL_TRIANGLES, 0, 36);
-
-            /*B_Matrix = glm::mat4(1.0f);
-            B_Matrix = glm::translate(B_Matrix, glm::vec3(build[i][j].x_trans, 0.0f, build[i][j].z_trans));
-            B_Matrix = glm::scale(B_Matrix, glm::vec3(4.0f, build[i][j].y_scale, 4.0f));
-            B_Matrix = glm::translate(B_Matrix, glm::vec3(0.f, 0.2f, 0.f));
-            StransformLocation = glGetUniformLocation(s_program, "transform");
-            glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(B_Matrix));
-            qobj = gluNewQuadric();
-            gluQuadricDrawStyle(qobj, obj_type);
-            objColorLocation = glGetUniformLocation(s_program, "objectColor");
-            isCheck = glGetUniformLocation(s_program, "isCheck");
-            glUniform1f(isCheck, false);
-            glUniform4f(objColorLocation, 0.7f, 0.7f, 0.4f, 1.0);
-            glBindVertexArray(VAO[1]);
-            glDrawArrays(GL_TRIANGLES, 30, 6);
-
-            B_Matrix = glm::mat4(1.0f);
-            B_Matrix = glm::translate(B_Matrix, glm::vec3(build[i][j].x_trans, 0.0f, build[i][j].z_trans));
-            B_Matrix = glm::scale(B_Matrix, glm::vec3(4.0f, build[i][j].y_scale, 4.0f));
-            B_Matrix = glm::translate(B_Matrix, glm::vec3(0.f, 0.2f, 0.f));
-            StransformLocation = glGetUniformLocation(s_program, "transform");
-            glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(B_Matrix));
-            qobj = gluNewQuadric();
-            gluQuadricDrawStyle(qobj, obj_type);
-            objColorLocation = glGetUniformLocation(s_program, "objectColor");
-            isCheck = glGetUniformLocation(s_program, "isCheck");
-            glUniform1f(isCheck, false);
-            glUniform4f(objColorLocation, 0.7f, 0.7f, 0.4f, 1.0);
-            glBindVertexArray(VAO[2]);
-            glDrawArrays(GL_TRIANGLES, 6, 24);*/
         }
     }
 }
@@ -436,14 +396,15 @@ bool building_setting_flag = false;
 GLvoid Building_Setting()  // i'am 빌딩들 랜덤 생성이에요
 {
     if (!building_setting_flag) {
-        float range = 100.0f; // 헬리콥터 주변에 건물이 생성될 범위
 
-        uniform_real_distribution<> dis_x{ pilot.x_trans, pilot.x_trans + range };
-        uniform_real_distribution<> dis_z{ pilot.z_trans, pilot.z_trans + range };
-
-        // 건물 위치 설정
-        h_f.x_max = dis_x(gen);
-        h_f.z_max = dis_z(gen);
+        for (int i = 0; i < 10; ++i) {
+            for (int j = 0; j < 10; ++j) {
+                build[i][j].x_trans = rand()%100+1; // -1 ~ 1
+                build[i][j].y_trans = 0;
+                build[i][j].y_scale = rand(); // 1 ~ 20?
+                build[i][j].z_trans = 40.0f;
+            }
+        }
 
         cout << "Building position: " << h_f.x_max << ", " << h_f.z_max << '\n';
 
@@ -694,7 +655,7 @@ GLvoid Ground() // i'am 지형이에요
     unsigned int objColorLocation = glGetUniformLocation(s_program, "objectColor");
     unsigned isCheck = glGetUniformLocation(s_program, "isCheck");
     glUniform1f(isCheck, false);
-    glUniform3f(objColorLocation, 0.3f, 0.3f, 0.3f);
+    glUniform3f(objColorLocation, 0.1f, 0.1f, 0.1f);
     glBindVertexArray(VAO[1]);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
@@ -791,7 +752,6 @@ GLvoid KeyBoardUp(unsigned char key, int x, int y) {
 
 GLvoid KeyBoard(unsigned char key, int x, int y) 
 {
-    cout << key;
     switch (key)
     {
     case 'q':
@@ -914,7 +874,7 @@ GLvoid Setting()
 
 }
 
-GLvoid Timer(int value) // get_events ( 헬기 엔진 )
+GLvoid Timer(int value) // get_events
 {
     if (h_f.x_is_trans) {
         pilot.x_trans += 0.1;
@@ -922,24 +882,24 @@ GLvoid Timer(int value) // get_events ( 헬기 엔진 )
 
     if (h_f.right_walk) {
         if (pilot.x_trans_aoc > -2.5) {
-            pilot.x_trans_aoc -= 0.01f;
+            pilot.x_trans_aoc -= 0.05f;
             if (pilot.z_rotate < 15)
                 pilot.z_rotate += 1.0f;
         }
     }
     else if (h_f.left_walk) {
         if (pilot.x_trans_aoc < 2.5)
-            pilot.x_trans_aoc += 0.01f; 
+            pilot.x_trans_aoc += 0.05f; 
         if (pilot.z_rotate > -15)
             pilot.z_rotate -= 1.0f;
     }
     else if (h_f.back_walk) {
-        pilot.y_trans_aoc -= 0.01f;
+        pilot.y_trans_aoc -= 0.03f;
         if (pilot.x_rotate > -15)
             pilot.x_rotate -= 1.0f;
     }
     else if (h_f.front_walk) {
-        pilot.y_trans_aoc += 0.01f;
+        pilot.y_trans_aoc += 0.03f;
         if (pilot.x_rotate < 15)
             pilot.x_rotate += 1.0f;
     }
@@ -963,6 +923,13 @@ GLvoid Timer(int value) // get_events ( 헬기 엔진 )
     if (bullet.z_trans > 15) {
         bullet.z_trans = 0;
         h_f.shoot_bullet = false;
+    }
+
+    // 건물 다가오기
+    for (int i = 0; i < 5; ++i) {
+        for (int j = 0; j < 5; ++j) {
+            build[i][j].z_trans -= 0.2;
+        }
     }
 
     // Building event
