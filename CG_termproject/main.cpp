@@ -396,7 +396,7 @@ bool building_setting_flag = false;
 GLvoid Building_Setting()  // i'am 빌딩들 랜덤 생성이에요
 {
     if (!building_setting_flag) {
-
+        cout << " !!!!!!!!!!!!! ";
         for (int i = 0; i < 10; ++i) {
             for (int j = 0; j < 10; ++j) {
                 build[i][j].x_trans = rand()%100+1; // -1 ~ 1
@@ -928,7 +928,10 @@ GLvoid Timer(int value) // get_events
     // 건물 다가오기
     for (int i = 0; i < 5; ++i) {
         for (int j = 0; j < 5; ++j) {
-            build[i][j].z_trans -= 0.2;
+            build[i][j].z_trans -= 0.2f;
+            if (build[i][j].z_trans < -3.8f)
+                build[i][j].z_trans = 40.f;
+                // building_setting_flag = false;
         }
     }
 
