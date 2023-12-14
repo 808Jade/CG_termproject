@@ -1,0 +1,1135 @@
+#define _CRT_SECURE_NO_WARNINGS //--- 프로그램 맨 앞에 선언할 것
+#include <stdlib.h>
+#include <stdio.h>
+#include <iostream>
+#include <fstream>
+#include <gl/glew.h>
+#include <gl/freeglut.h>
+#include <gl/freeglut_ext.h>
+#include <glm/glm.hpp>
+#include <glm/ext.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <random>
+#include <string>
+
+#define width 1200
+#define height 800
+#define h_vertex 0.2f
+#define pi 3.141592
+using namespace std;
+
+GLUquadricObj* qobj;
+GLuint s_program;
+GLuint VAO[3], VBO[6];
+
+std::random_device rd;
+std::mt19937 gen(rd());
+std::uniform_real_distribution<> random_color(0.1, 1);
+
+bool test = true;
+GLvoid drawScene();
+GLvoid Reshape(int, int);
+GLvoid KeyBoard(unsigned char, int, int);
+GLvoid KeyBoardUp(unsigned char, int, int);
+GLvoid SpecialKeyBoard(int, int, int);
+GLvoid SpecialKeyBoardUp(int, int, int);
+GLvoid Timer(int);
+
+float bottom[] =
+{
+    1, 0, -1,
+    -1, 0, 1,
+    1, 0, 1,
+    1, 0, -1,
+    -1, 0, -1,
+    -1, 0, 1
+};
+
+typedef struct object {
+    float x_trans{}, y_trans{}, z_trans{};
+    float x_trans_aoc{}, y_trans_aoc{}, z_trans_aoc{};
+    float x_rotate{}, y_rotate{}, z_rotate{};
+    float x_rotate_aoc{}, y_rotate_aoc{}, z_rotate_aoc{};
+    float x_scale{ }, y_scale{}, z_scale{};
+    float x_scale_aoc{}, y_scale_aoc{}, z_scale_aoc{};
+    float color_r{}, color_g{}, color_b{};
+
+
+    float r{};
+}O;
+typedef struct function {
+    bool x_is_trans{ false }, y_is_trans{ false }, z_is_trans{ false };
+    int x_max{}, z_max{};
+
+    bool left_walk{ false };
+    bool right_walk{ false };
+    bool front_walk{ false };
+    bool back_walk{ false };
+
+    bool left_turn{ false };
+
+    bool first_see{ false };
+
+    bool shoot_bullet{ false };
+    bool game_start{ false };
+}F;
+
+O pilot, build, bullet, build2, build3, build4, build5, build6, 
+    build7, build8, build9, build10, game;  
+O temp, camera;
+F h_f, temp_f;
+
+
+
+GLuint shaderID;
+GLuint vertexShader;
+GLuint fragmentShader;
+
+GLenum obj_type{ GL_FILL };
+GLint g_window_w, g_window_h;
+struct Camera_Option {
+    float camera_distance = 3.0;
+
+    float mouse_sensitivity = 200;
+
+    float camera_drgree_x{};
+    float camera_drgree_y{};
+    float camera_delta_y = 0;
+
+    float camera_fov = 60.0;
+
+    float camera_moving_timer = 0;
+};
+Camera_Option CO, C1;
+
+GLvoid Setting();
+GLfloat hexa[] = {   //육면체
+    //윗면
+    -h_vertex, h_vertex, h_vertex,
+    h_vertex, h_vertex, h_vertex,
+    -h_vertex, h_vertex, -h_vertex,
+
+    h_vertex, h_vertex, h_vertex,
+    h_vertex, h_vertex, -h_vertex,
+    -h_vertex, h_vertex, -h_vertex,
+    //정면
+    -h_vertex, -h_vertex, h_vertex,
+    h_vertex, -h_vertex, h_vertex,
+    -h_vertex, h_vertex, h_vertex,
+
+    h_vertex, -h_vertex, h_vertex,
+    h_vertex, h_vertex, h_vertex,
+    -h_vertex, h_vertex, h_vertex,
+
+    //아랫면
+    -h_vertex, -h_vertex, h_vertex,
+    -h_vertex, -h_vertex, -h_vertex,
+    h_vertex, -h_vertex, -h_vertex,
+
+    -h_vertex, -h_vertex, h_vertex,
+    h_vertex, -h_vertex, -h_vertex,
+    h_vertex, -h_vertex, h_vertex,
+
+    //뒷면
+    h_vertex, -h_vertex, -h_vertex,
+    -h_vertex, -h_vertex, -h_vertex,
+    h_vertex, h_vertex, -h_vertex,
+
+    -h_vertex, -h_vertex, -h_vertex,
+    -h_vertex, h_vertex, -h_vertex,
+    h_vertex, h_vertex, -h_vertex,
+
+
+    //좌측면
+    -h_vertex, -h_vertex, -h_vertex,
+    -h_vertex, h_vertex, h_vertex,
+    -h_vertex, h_vertex, -h_vertex,
+
+    -h_vertex, -h_vertex, -h_vertex,
+    -h_vertex, -h_vertex, h_vertex,
+    -h_vertex, h_vertex, h_vertex,
+
+    //우측면
+    h_vertex, -h_vertex, h_vertex,
+    h_vertex, -h_vertex, -h_vertex,
+    h_vertex, h_vertex, h_vertex,
+
+    h_vertex, -h_vertex, -h_vertex,
+    h_vertex, h_vertex, -h_vertex,
+    h_vertex, h_vertex, h_vertex
+};
+
+GLchar* filetobuf(const GLchar* file)
+{
+    FILE* fptr;
+    long length;
+    GLchar* buf;
+
+    fopen_s(&fptr, file, "rb");
+    if (!fptr)
+        return NULL;
+
+    fseek(fptr, 0, SEEK_END);
+    length = ftell(fptr);
+    buf = (GLchar*)malloc(length + 1);
+    fseek(fptr, 0, SEEK_SET);
+    fread(buf, length, 1, fptr);
+    fclose(fptr);
+    buf[length] = 0;
+
+    return buf;
+}
+void make_vertexShaders()
+{
+    GLchar* vertexSource;
+    vertexSource = filetobuf("vertex.glsl");
+    vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vertexSource, NULL);
+    glCompileShader(vertexShader);
+}
+void make_fragmentShader()
+{
+    GLchar* fragmentSource;
+    fragmentSource = filetobuf("fragment.glsl");
+    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
+    glCompileShader(fragmentShader);
+
+}
+void InitShader()
+{
+    make_vertexShaders();
+    make_fragmentShader();
+
+    s_program = glCreateProgram();
+
+    glAttachShader(s_program, vertexShader);
+    glAttachShader(s_program, fragmentShader);
+    glLinkProgram(s_program);
+
+    GLint result;
+    GLchar errorLog[512];
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &result);
+    if (!result)
+    {
+        glGetShaderInfoLog(fragmentShader, 512, NULL, errorLog);
+        cerr << "ERROR :  fragment Shader Fail Compile \n" << errorLog << endl;
+        exit(-1);
+    }
+
+    else
+        cout << "good" << endl;
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+    glUseProgram(s_program);
+}
+
+void ReadObj(const std::string objfilename, std::vector<glm::vec3>& vertex, std::vector<glm::vec3>& normalVertex, std::vector<glm::vec2>& vtVertex)
+{
+    int lineCount = 0;
+    std::string line;
+    std::string check[6];
+    int vertexNum = 0;
+    int normalNum = 0;
+    int cordiNum = 0;
+    std::ifstream inFile(objfilename);
+    std::vector<glm::vec4>face;
+    std::vector<glm::vec4>Noramlface;
+    std::vector<glm::vec4>vtface;
+    while (std::getline(inFile, line)) {
+        if (line[0] == 'v' && line[1] == ' ') {
+            vertexNum++;
+        }
+        if (line[0] == 'v' && line[1] == 'n') {
+            normalNum++;
+        }
+        if (line[0] == 'v' && line[1] == 't') {
+            cordiNum++;
+        }
+        std::cout << line << std::endl;
+    }
+    glm::vec4* vertexData = new glm::vec4[vertexNum];
+    glm::vec4* normalData = new glm::vec4[normalNum];
+    glm::vec2* cordinaterData = new glm::vec2[cordiNum];
+
+    inFile.clear();
+    inFile.seekg(0, std::ios::beg);
+    vertexNum = 0;
+    normalNum = 0;
+    cordiNum = 0;
+    char head[2];
+    int faceNum[3];
+    int vnNum[3];
+    int vtNum[3];
+    std::string nt;
+    char n;
+    char s;
+    while (inFile >> std::noskipws >> head[0]) {
+        if (head[0] == 'v') {
+            inFile >> std::noskipws >> head[1];
+            if (head[1] == ' ') {
+                inFile >> std::skipws >> vertexData[vertexNum].x >> vertexData[vertexNum].y >> vertexData[vertexNum].z;
+                vertexNum++;
+            }
+            else if (head[1] == 'n') {
+                inFile >> std::skipws >> normalData[normalNum].x >> normalData[normalNum].y >> normalData[normalNum].z;
+                normalNum++;
+            }
+            else if (head[1] == 't') {
+                float trash;
+                inFile >> std::skipws >> cordinaterData[cordiNum].x >> cordinaterData[cordiNum].y >> trash;
+                cordiNum++;
+            }
+            head[1] = '\0';
+        }
+        if (head[0] == 'f') {
+            inFile >> std::noskipws >> head[1];
+            if (head[1] == ' ') {
+                for (int i = 0; i < 3; ++i) {
+                    inFile >> std::skipws >> faceNum[i] >> std::noskipws >> n >> vtNum[i] >> std::noskipws >> s >> vnNum[i];
+                    // 4개의 인덱스를 처리하려면 위 줄을 주석 해제하고, 아래 주석 처리된 줄을 사용하세요.
+                    // inFile >> std::skipws >> faceNum[i] >> std::noskipws >> n >> vtNum[i] >> std::noskipws >> s >> vnNum[i] >> std::noskipws >> trash;
+                }
+
+                glm::vec4 temp = glm::vec4(faceNum[0], faceNum[1], faceNum[2], 1);//faceNum[3]
+                glm::vec4 vttemp = glm::vec4(vtNum[0], vtNum[1], vtNum[2], 1); //vtNum[3]
+                glm::vec4 vntemp = glm::vec4(vnNum[0], vnNum[1], vnNum[2], 1);//vnNum[3]
+                face.push_back(temp);
+                vtface.push_back(vttemp);
+                Noramlface.push_back(vntemp);
+            }
+            head[1] = '\0';
+        }
+    }
+    for (auto iter = face.begin(); iter < face.end(); iter++) {
+        vertex.push_back(vertexData[(int)(iter->x) - 1]);
+        vertex.push_back(vertexData[(int)(iter->y) - 1]);
+        vertex.push_back(vertexData[(int)(iter->z) - 1]);                     //버텍스 좌표
+        //vertex.push_back(vertexData[(int)(iter->w) - 1]);
+    }
+    for (auto iter = vtface.begin(); iter < vtface.end(); iter++) {
+        vtVertex.push_back(cordinaterData[(int)(iter->x) - 1]);
+        vtVertex.push_back(cordinaterData[(int)(iter->y) - 1]);
+        vtVertex.push_back(cordinaterData[(int)(iter->z) - 1]);                //텍스쳐 좌표
+        //ve``rtex.push_back(vertexData[(int)(iter->w) - 1]);
+    }
+    for (auto iter = Noramlface.begin(); iter < Noramlface.end(); iter++) {
+        normalVertex.push_back(normalData[(int)(iter->x) - 1]);
+        normalVertex.push_back(normalData[(int)(iter->y) - 1]);
+        normalVertex.push_back(normalData[(int)(iter->z) - 1]);               //노멀 좌표
+        //normalVertex.push_back(normalData[(int)(iter->w) - 1]);
+    }
+    delete[] vertexData;
+    delete[] cordinaterData;
+    delete[] normalData;
+    inFile.close();
+}
+
+GLvoid InitBuffer()
+{
+    glGenVertexArrays(3, VAO);
+
+    glBindVertexArray(VAO[0]);
+    glGenBuffers(2, &VBO[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(hexa), hexa, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
+
+    glBindVertexArray(VAO[1]);
+    glGenBuffers(2, &VBO[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(bottom), bottom, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
+
+
+
+    glUseProgram(s_program);
+    unsigned int lightPosLocation = glGetUniformLocation(s_program, "lightPos"); //--- lightPos 값 전달: (0.0, 0.0, 5.0);
+    glUniform3f(lightPosLocation, 5.0f, 10.0f, 0.0f);
+    unsigned int lightColorLocation = glGetUniformLocation(s_program, "lightColor"); //--- lightColor 값 전달: (1.0, 1.0, 1.0) 백색
+    glUniform3f(lightColorLocation, 1.0f, 1.0f, 1.0f);
+
+}
+
+float buildingHeight = rand() % 10 + 3; // 랜덤한 높이 설정
+GLvoid Building_Mat()  // i'am 빌딩 만들기이에요
+{
+    glm::mat4 Block = glm::mat4(1.0f);
+    Block = glm::translate(Block, glm::vec3(build.x_trans, 0.0f, build.z_trans));
+    Block = glm::translate(Block, glm::vec3(0.f, 0.0f, game.z_trans));
+    Block = glm::translate(Block, glm::vec3(0.f, 0.2f, 0.f));
+    Block = glm::translate(Block, glm::vec3(0.f, 0.0f, 510.f));
+    Block = glm::scale(Block, glm::vec3(3.0f, 8.0f, 3.0f));
+    unsigned int StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(Block));
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    int objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    unsigned isCheck = glGetUniformLocation(s_program, "isCheck");
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.7f, 0.7f, 0.0f, 1.0);
+    glBindVertexArray(VAO[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    //장애물2
+    glm::mat4 Block2 = glm::mat4(1.0f);
+    Block2 = glm::translate(Block2, glm::vec3(build2.x_trans, 0.0f, build2.z_trans));
+    Block2 = glm::translate(Block, glm::vec3(0.f, 0.0f, game.z_trans));
+    Block2 = glm::translate(Block2, glm::vec3(0.f, 0.2f, 0.f));
+    Block2 = glm::translate(Block2, glm::vec3(0.f, 0.f, 510.f));
+    Block2 = glm::scale(Block2, glm::vec3(3.0f, 8.0f, 3.0f));
+    StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(Block2));
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    isCheck = glGetUniformLocation(s_program, "isCheck");
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 1.0f, 1.0f, 0.0f, 1.0);
+    glBindVertexArray(VAO[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    //장애물3
+    glm::mat4 Block3 = glm::mat4(1.0f);
+    Block3 = glm::translate(Block3, glm::vec3(build3.x_trans, 0.0f, build3.z_trans));
+    Block3 = glm::translate(Block, glm::vec3(0.f, 0.0f, game.z_trans));
+    Block3 = glm::translate(Block3, glm::vec3(0.f, 0.2f, 0.f));
+    Block3 = glm::translate(Block3, glm::vec3(0.f, 0.0f, 510.f));
+    Block3 = glm::scale(Block3, glm::vec3(3.0f, 8.0f, 3.0f));
+    StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(Block3));
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    isCheck = glGetUniformLocation(s_program, "isCheck");
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 1.0f, 1.0f, 0.0f, 1.0);
+    glBindVertexArray(VAO[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    glm::mat4 Block4 = glm::mat4(1.0f);
+    Block4 = glm::translate(Block4, glm::vec3(build4.x_trans, 0.0f, build4.z_trans));
+    Block4 = glm::translate(Block4, glm::vec3(0.f, 0.0f, game.z_trans));
+    Block4 = glm::translate(Block4, glm::vec3(0.f, 0.2f, 0.f));
+    Block4 = glm::translate(Block4, glm::vec3(0.f, 0.0f, 510.f));
+    Block4 = glm::scale(Block4, glm::vec3(3.0f, 8.0f, 3.0f));
+    StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(Block4));
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    isCheck = glGetUniformLocation(s_program, "isCheck");
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.7f, 0.7f, 0.0f, 1.0);
+    glBindVertexArray(VAO[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    glm::mat4 Block5 = glm::mat4(1.0f);
+    Block5 = glm::translate(Block5, glm::vec3(build5.x_trans, 0.0f, build5.z_trans));
+    Block5 = glm::translate(Block5, glm::vec3(0.f, 0.0f, game.z_trans));
+    Block5 = glm::translate(Block5, glm::vec3(0.f, 0.2f, 0.f));
+    Block5 = glm::translate(Block5, glm::vec3(0.f, 0.0f, 510.f));
+    Block5 = glm::scale(Block5, glm::vec3(3.0f, 8.0f, 3.0f));
+    StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(Block5));
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    isCheck = glGetUniformLocation(s_program, "isCheck");
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.7f, 0.7f, 0.0f, 1.0);
+    glBindVertexArray(VAO[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    glm::mat4 Block6 = glm::mat4(1.0f);
+    Block6 = glm::translate(Block6, glm::vec3(build6.x_trans, 0.0f, build6.z_trans));
+    Block6 = glm::translate(Block6, glm::vec3(0.f, 0.0f, game.z_trans));
+    Block6 = glm::translate(Block6, glm::vec3(0.f, 0.2f, 0.f));
+    Block6 = glm::translate(Block6, glm::vec3(0.f, 0.0f, 510.f));
+    Block6 = glm::scale(Block6, glm::vec3(3.0f, 8.0f, 3.0f));
+    StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(Block6));
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    isCheck = glGetUniformLocation(s_program, "isCheck");
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.7f, 0.7f, 0.0f, 1.0);
+    glBindVertexArray(VAO[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    glm::mat4 Block7 = glm::mat4(1.0f);
+    Block7 = glm::translate(Block7, glm::vec3(build7.x_trans, 0.0f, build7.z_trans));
+    Block7 = glm::translate(Block7, glm::vec3(0.f, 0.0f, game.z_trans));
+    Block7 = glm::translate(Block7, glm::vec3(0.f, 0.2f, 0.f));
+    Block7 = glm::translate(Block7, glm::vec3(0.f, 0.0f, 510.f));
+    Block7 = glm::scale(Block7, glm::vec3(3.0f, 8.0f, 3.0f));
+    StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(Block7));
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    isCheck = glGetUniformLocation(s_program, "isCheck");
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.7f, 0.7f, 0.0f, 1.0);
+    glBindVertexArray(VAO[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    glm::mat4 Block8 = glm::mat4(1.0f);
+    Block8 = glm::translate(Block8, glm::vec3(build8.x_trans, 0.0f, build8.z_trans));
+    Block8 = glm::translate(Block8, glm::vec3(0.f, 0.0f, game.z_trans));
+    Block8 = glm::translate(Block8, glm::vec3(0.f, 0.2f, 0.f));
+    Block8 = glm::translate(Block8, glm::vec3(0.f, 0.0f, 510.f));
+    Block8 = glm::scale(Block8, glm::vec3(3.0f, 8.0f, 3.0f));
+    StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(Block8));
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    isCheck = glGetUniformLocation(s_program, "isCheck");
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.7f, 0.7f, 0.0f, 1.0);
+    glBindVertexArray(VAO[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    glm::mat4 Block9 = glm::mat4(1.0f);
+    Block9 = glm::translate(Block9, glm::vec3(build9.x_trans, 0.0f, build9.z_trans));
+    Block9 = glm::translate(Block9, glm::vec3(0.f, 0.0f, game.z_trans));
+    Block9 = glm::translate(Block9, glm::vec3(0.f, 0.2f, 0.f));
+    Block9 = glm::translate(Block9, glm::vec3(0.f, 0.0f, 510.f));
+    Block9 = glm::scale(Block9, glm::vec3(3.0f, 8.0f, 3.0f));
+    StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(Block9));
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    isCheck = glGetUniformLocation(s_program, "isCheck");
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.7f, 0.7f, 0.0f, 1.0);
+    glBindVertexArray(VAO[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    glm::mat4 Block10 = glm::mat4(1.0f);
+    Block10 = glm::translate(Block10, glm::vec3(build10.x_trans, 0.0f, build10.z_trans));
+    Block10 = glm::translate(Block10, glm::vec3(0.f, 0.0f, game.z_trans));
+    Block10 = glm::translate(Block10, glm::vec3(0.f, 0.2f, 0.f));
+    Block10 = glm::translate(Block10, glm::vec3(0.f, 0.0f, 510.f));
+    Block10 = glm::scale(Block10, glm::vec3(3.0f, 8.0f, 3.0f));
+    StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(Block10));
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    isCheck = glGetUniformLocation(s_program, "isCheck");
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.7f, 0.7f, 0.0f, 1.0);
+    glBindVertexArray(VAO[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+       
+}
+
+
+GLvoid Building_Setting()  // i'am 빌딩들 랜덤 생성이에요
+{
+    uniform_int_distribution<int> dis{ -5000, 5000 };
+    build.x_trans = dis(gen) / 1000.;
+    build.z_trans = dis(gen) / 100.;
+    build2.x_trans = dis(gen) / 1000.;
+    build2.z_trans = dis(gen) / 100.;
+    build3.x_trans = dis(gen) / 1000.;
+    build3.z_trans = dis(gen) / 100.;
+    build4.x_trans = dis(gen) / 1000.;
+    build4.z_trans = dis(gen) / 100.;
+    build5.x_trans = dis(gen) / 1000.;
+    build5.z_trans = dis(gen) / 100.;
+    build6.x_trans = dis(gen) / 1000.;
+    build6.z_trans = dis(gen) / 100.;
+    build7.x_trans = dis(gen) / 1000.;
+    build7.z_trans = dis(gen) / 100.;
+    build8.x_trans = dis(gen) / 1000.;
+    build8.z_trans = dis(gen) / 100.;
+    build9.x_trans = dis(gen) / 1000.;
+    build9.z_trans = dis(gen) / 100.;
+    build10.x_trans = dis(gen) / 1000.;
+    build10.z_trans = dis(gen) / 100.;
+
+  
+      
+}
+
+
+GLfloat rot;
+GLfloat rot_t;
+GLfloat camera_rot;
+GLfloat C_R;
+GLfloat arm_rot;
+GLfloat limit;
+GLvoid Pilot() // i'am 헬기(조종사) 에요
+{
+    // 날개 연결부
+    glm::mat4 H_Matrix = glm::mat4(1.0f);
+    H_Matrix = glm::translate(H_Matrix, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));  // all
+    H_Matrix = glm::translate(H_Matrix, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
+    H_Matrix = glm::rotate(H_Matrix, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
+    H_Matrix = glm::rotate(H_Matrix, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
+    H_Matrix = glm::rotate(H_Matrix, glm::radians(pilot.y_rotate_aoc), glm::vec3(0.0f, 1.0f, 0.0f));  // only engin ans wings
+    H_Matrix = glm::translate(H_Matrix, glm::vec3(0.0f, 1.0f, 0.0f));
+    H_Matrix = glm::scale(H_Matrix, glm::vec3(0.2f, 0.5f, 0.2f));
+    unsigned int StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(H_Matrix));
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    int objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    unsigned isCheck = glGetUniformLocation(s_program, "isCheck");
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.5f, 0.3f, 0.5f, 1.0);
+    glBindVertexArray(VAO[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    // 날개 1
+    glm::mat4 H_Matrix1 = glm::mat4(1.0f);
+    H_Matrix1 = glm::translate(H_Matrix1, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));  // all
+    H_Matrix1 = glm::translate(H_Matrix1, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
+    H_Matrix1 = glm::rotate(H_Matrix1, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
+    H_Matrix1 = glm::rotate(H_Matrix1, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
+    H_Matrix1 = glm::rotate(H_Matrix1, glm::radians(pilot.y_rotate_aoc), glm::vec3(0.0f, 1.0f, 0.0f));  // only engin ans wings
+    H_Matrix1 = glm::translate(H_Matrix1, glm::vec3(0.0f, 1.1f, 0.0f));
+    H_Matrix1 = glm::scale(H_Matrix1, glm::vec3(4.5f, 0.2f, 0.2f));
+
+    StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(H_Matrix1));
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    isCheck = glGetUniformLocation(s_program, "isCheck");
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.0f, 0.0f, 1.0f, 1.0);
+    glBindVertexArray(VAO[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    // 날개 2
+    glm::mat4 H_Matrix2 = glm::mat4(1.0f);
+    H_Matrix2 = glm::translate(H_Matrix2, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));  // all
+    H_Matrix2 = glm::translate(H_Matrix2, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
+    H_Matrix2 = glm::rotate(H_Matrix2, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
+    H_Matrix2 = glm::rotate(H_Matrix2, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
+    H_Matrix2 = glm::rotate(H_Matrix2, glm::radians(pilot.y_rotate_aoc), glm::vec3(0.0f, 1.0f, 0.0f));  // only engin ans wings
+    H_Matrix2 = glm::translate(H_Matrix2, glm::vec3(0.0f, 1.1f, 0.0f));
+    H_Matrix2 = glm::scale(H_Matrix2, glm::vec3(0.2f, 0.2f, 4.5f));
+
+    StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(H_Matrix2));
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    isCheck = glGetUniformLocation(s_program, "isCheck");
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.0f, 0.0f, 1.0f, 1.0);
+    glBindVertexArray(VAO[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    // 몸통 중간
+    glm::mat4 H_Matrix3 = glm::mat4(1.0f);
+    H_Matrix3 = glm::translate(H_Matrix3, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));  // all
+    H_Matrix3 = glm::translate(H_Matrix3, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
+    H_Matrix3 = glm::rotate(H_Matrix3, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
+    H_Matrix3 = glm::rotate(H_Matrix3, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
+    H_Matrix3 = glm::translate(H_Matrix3, glm::vec3(0.f, 0.7f, -0.2f));
+    H_Matrix3 = glm::scale(H_Matrix3, glm::vec3(1.1f, 1.1f, 3.0f));
+    StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(H_Matrix3));
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    isCheck = glGetUniformLocation(s_program, "isCheck");
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.0f, 0.0f, 1.0f, 1.0);
+    glBindVertexArray(VAO[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    // 몸통 앞
+    glm::mat4 H_Matrix4 = glm::mat4(1.0f);
+    H_Matrix4 = glm::translate(H_Matrix4, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));
+    H_Matrix4 = glm::translate(H_Matrix4, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));
+    H_Matrix4 = glm::rotate(H_Matrix4, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));
+    H_Matrix4 = glm::rotate(H_Matrix4, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));
+    H_Matrix4 = glm::translate(H_Matrix4, glm::vec3(0.f, 0.65f, 0.3f));
+    H_Matrix4 = glm::scale(H_Matrix4, glm::vec3(0.3f, 0.3f, 0.4f));
+    StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(H_Matrix4));
+    objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    isCheck = glGetUniformLocation(s_program, "isCheck");
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.0f, 0.0f, 1.0f, 1.0);
+    gluSphere(qobj, 1.0, 20, 30);
+
+    // 몸통 뒤
+    glm::mat4 H_Matrix5 = glm::mat4(1.0f);
+    H_Matrix5 = glm::translate(H_Matrix5, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));  // all
+    H_Matrix5 = glm::translate(H_Matrix5, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
+    H_Matrix5 = glm::rotate(H_Matrix5, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
+    H_Matrix5 = glm::rotate(H_Matrix5, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
+    H_Matrix5 = glm::translate(H_Matrix5, glm::vec3(0.f, 0.7f, -1.0f));
+    H_Matrix5 = glm::scale(H_Matrix5, glm::vec3(0.2f, 0.2f, 1.0f));
+    StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(H_Matrix5));
+    objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    isCheck = glGetUniformLocation(s_program, "isCheck");
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.0f, 0.0f, 1.0f, 1.0);
+    gluCylinder(qobj, 0.3f, 1.1f, 0.5, 100, 1);
+
+    // 몸통 뒤(꼬리앞)
+    glm::mat4 H_Matrix6 = glm::mat4(1.0f);
+    H_Matrix6 = glm::translate(H_Matrix6, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));  // all
+    H_Matrix6 = glm::translate(H_Matrix6, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
+    H_Matrix6 = glm::rotate(H_Matrix6, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
+    H_Matrix6 = glm::rotate(H_Matrix6, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
+    H_Matrix6 = glm::translate(H_Matrix6, glm::vec3(0.f, 0.7f, -1.7f));
+    H_Matrix6 = glm::scale(H_Matrix6, glm::vec3(0.2f, 0.2f, 1.0f));
+    StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(H_Matrix6));
+    objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    isCheck = glGetUniformLocation(s_program, "isCheck");
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.0f, 0.0f, 1.0f, 1.0);
+    gluCylinder(qobj, 0.3f, 0.3f, 1.5, 100, 1);
+
+    // 몸통 뒤(꼬리 날개)
+    glm::mat4 H_Matrix7 = glm::mat4(1.0f);
+    H_Matrix7 = glm::translate(H_Matrix7, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));  // all
+    H_Matrix7 = glm::translate(H_Matrix7, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));  // all
+    H_Matrix7 = glm::rotate(H_Matrix7, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
+    H_Matrix7 = glm::rotate(H_Matrix7, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
+    H_Matrix7 = glm::translate(H_Matrix7, glm::vec3(0.f, 0.8f, -1.6f));
+    H_Matrix7 = glm::scale(H_Matrix7, glm::vec3(0.1f, 0.7f, 0.5f));
+    StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(H_Matrix7));
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    isCheck = glGetUniformLocation(s_program, "isCheck");
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.0f, 0.0f, 1.0f, 1.0);
+    glBindVertexArray(VAO[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    //본체 바닥(왼쪽)
+    H_Matrix = glm::mat4(1.0f);
+    H_Matrix = glm::translate(H_Matrix, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));
+    H_Matrix = glm::translate(H_Matrix, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));
+    H_Matrix = glm::rotate(H_Matrix, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
+    H_Matrix = glm::rotate(H_Matrix, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
+    H_Matrix = glm::translate(H_Matrix, glm::vec3(0.3f, 0.2f, -0.3f));
+    H_Matrix = glm::scale(H_Matrix, glm::vec3(0.2f, 0.2f, 2.5f));
+    StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(H_Matrix));
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    isCheck = glGetUniformLocation(s_program, "isCheck");
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 1.0f, 0.3f, 0.7f, 1.0);
+    glBindVertexArray(VAO[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    //본체 바닥2
+    H_Matrix = glm::mat4(1.0f);
+    H_Matrix = glm::translate(H_Matrix, glm::vec3(0.f, pilot.y_trans_aoc, pilot.z_trans_aoc));
+    H_Matrix = glm::translate(H_Matrix, glm::vec3(pilot.x_trans_aoc, 0.f, 0.f));
+    H_Matrix = glm::rotate(H_Matrix, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));  // all
+    H_Matrix = glm::rotate(H_Matrix, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));  // all
+    H_Matrix = glm::translate(H_Matrix, glm::vec3(-0.3f, 0.2f, -0.3f));
+    H_Matrix = glm::scale(H_Matrix, glm::vec3(0.2f, 0.2f, 2.5f));
+    StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(H_Matrix));
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    isCheck = glGetUniformLocation(s_program, "isCheck");
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 1.0f, 0.3f, 0.7f, 1.0);
+    glBindVertexArray(VAO[0]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+}
+
+GLvoid Gun() //i'am 총알이에요
+{
+    glm::mat4 Bullet = glm::mat4(1.0f);
+    Bullet = glm::translate(Bullet, glm::vec3(pilot.x_trans_aoc, pilot.y_trans_aoc, pilot.z_trans_aoc));
+    Bullet = glm::rotate(Bullet, glm::radians(pilot.x_rotate), glm::vec3(1.0f, 0.f, 0.f));
+    Bullet = glm::rotate(Bullet, glm::radians(pilot.z_rotate), glm::vec3(0.f, 0.f, 1.0f));
+    Bullet = glm::translate(Bullet, glm::vec3(0.f, 0.f, bullet.z_trans));
+    Bullet = glm::translate(Bullet, glm::vec3(0.f, 0.65f, 0.3f));
+    Bullet = glm::scale(Bullet, glm::vec3(0.3f, 0.3f, 0.4f));
+    unsigned int StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(Bullet));
+    int objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    unsigned isCheck = glGetUniformLocation(s_program, "isCheck");
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.0f, 0.0f, 1.0f, 1.0);
+    gluSphere(qobj, 0.2, 20, 30);
+}
+
+GLvoid Gun_collision() // i'am 총알 충돌체크에요
+{
+
+}
+
+GLvoid BackGround() // i'am 지형이에요
+{
+    glm::mat4 Bottom = glm::mat4(1.0f);
+    Bottom = glm::translate(Bottom, glm::vec3(0.f, -1.0f, 0.f));
+    Bottom = glm::translate(Bottom, glm::vec3(0.f, 0.f, game.z_trans));
+    Bottom = glm::translate(Bottom, glm::vec3(0.f, 0.f, 510.f));
+    Bottom = glm::scale(Bottom, glm::vec3(500.0f, 0.f, 500.0f));
+    unsigned int StransformLocation = glGetUniformLocation(s_program, "transform");
+    glUniformMatrix4fv(StransformLocation, 1, GL_FALSE, glm::value_ptr(Bottom));
+    qobj = gluNewQuadric();
+    gluQuadricDrawStyle(qobj, obj_type);
+    int objColorLocation = glGetUniformLocation(s_program, "objectColor");
+    unsigned isCheck = glGetUniformLocation(s_program, "isCheck");
+    glUniform1f(isCheck, false);
+    glUniform4f(objColorLocation, 0.5f, 0.5f, 0.5f, 1.0);
+    glBindVertexArray(VAO[1]);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+
+
+void drawScene()
+{
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 깊이 검사 (클리핑)
+    glUseProgram(s_program);
+
+    glm::mat4 view = glm::mat4(1.0f);
+    glm::mat4 projection = glm::mat4(1.0f);
+
+    for (int i = 0; i < 2; ++i) {
+        if (i == 0) {
+            glViewport(0, 0, width, height);
+
+            if (!h_f.first_see) { // 삼 인칭 시점
+                glm::vec3 cameraPos = glm::vec3(pilot.x_trans, pilot.y_trans_aoc, pilot.z_trans_aoc - 0.3f);
+                glm::vec3 cameraDirection = glm::vec3(pilot.x_trans, pilot.y_trans_aoc, pilot.z_trans_aoc);
+                glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+                view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
+                view = glm::rotate(view, glm::radians(-20.f), glm::vec3(1.0f, 0.0f, 0.0f));
+                view = glm::rotate(view, glm::radians(camera.y_rotate_aoc), glm::vec3(0.0f, 1.0f, 0.0f));
+                view = glm::translate(view, glm::vec3(-pilot.x_trans - pilot.x_trans_aoc, 0.0f, pilot.z_trans));
+            }
+            else { // 일인칭 시점
+                glm::vec3 cameraPos = glm::vec3(-pilot.x_trans - pilot.x_trans_aoc, 0.1f, -pilot.z_trans - pilot.z_trans_aoc);
+                glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, -1.0f);
+                glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+                view = glm::lookAt(cameraPos, cameraPos + cameraDirection, cameraUp);
+                view = glm::rotate(view, glm::radians(-10.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+                view = glm::rotate(view, glm::radians(-pilot.y_rotate), glm::vec3(0.0f, 1.0f, 0.0f));
+            }
+
+            projection = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 50.0f);
+            projection = glm::translate(projection, glm::vec3(0.0, 0.0, -5.0));
+        }
+        else { // 미니맵
+            glViewport(1050, 650, 150, 150);
+            glm::vec3 cameraPos = glm::vec3(pilot.x_trans, 5.0f, pilot.z_trans);
+            glm::vec3 cameraDirection = glm::vec3(pilot.x_trans, 0.0f, pilot.z_trans);
+            glm::vec3 cameraUp = glm::vec3(0.0f, 0.0f, 10.0f);
+
+            view = glm::lookAt(cameraPos, cameraDirection, cameraUp);
+            projection = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 50.0f);
+            projection = glm::translate(projection, glm::vec3(0.0, 0.0, -5.0));
+        }
+
+        unsigned int viewLocation = glGetUniformLocation(s_program, "view");
+        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
+
+        unsigned int projectionLocation = glGetUniformLocation(s_program, "projection");
+        glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projection[0][0]);
+
+        Pilot();
+        Gun();
+        BackGround();
+        Building_Mat();
+    }
+
+    glutSwapBuffers();
+    glutPostRedisplay();
+}
+
+
+void Reshape(int w, int h) {
+    g_window_w = w;
+    g_window_h = h;
+    glViewport(0, 0, w, h);
+}
+
+GLvoid KeyBoardUp(unsigned char key, int x, int y) {
+    switch (key)
+    {
+    case 'a':
+        h_f.left_walk = false;
+        break;
+    case 'd':
+        h_f.right_walk = false;
+        break;
+    case 'w':
+        h_f.front_walk = false;
+        break;
+    case 's':
+        h_f.back_walk = false;
+        break;
+    }
+    glutPostRedisplay();
+}
+
+GLvoid KeyBoard(unsigned char key, int x, int y) {
+    switch (key)
+    {
+    case 'q':
+        exit(0);
+        cout << "exit program" << '\n';
+        break;
+    case 'x':
+        h_f.x_is_trans = !h_f.x_is_trans;
+    case 'y':
+        h_f.z_is_trans = !h_f.z_is_trans;
+    case 'd':
+        h_f.right_walk = true;
+        break;
+    case 'a':
+        h_f.left_walk = true;
+        break;
+    case 'w':
+        h_f.front_walk = true;
+        break;
+    case 's':
+        h_f.back_walk = true;
+        break;
+    case 'm':
+        h_f.game_start = !h_f.game_start;
+        break;
+    case 'c':
+        memcpy(&pilot, &temp, sizeof(pilot));
+        memcpy(&camera, &temp, sizeof(camera));
+        memcpy(&h_f, &temp_f, sizeof(h_f));
+        break;
+    case '1':
+        h_f.first_see = true;
+        cout << "1인칭" << endl;
+    case '3':
+        h_f.first_see = false;
+        cout << "3인칭" << endl;
+    case 'p':
+        h_f.shoot_bullet = !h_f.shoot_bullet;
+    }
+    glutPostRedisplay();
+}
+
+GLvoid SpecialKeyBoard(int key, int x, int y)
+{
+
+    glutPostRedisplay();
+}
+
+GLvoid SpecialKeyBoardUp(int key, int x, int y)
+{
+    switch (key) {
+    }
+    glutPostRedisplay();
+}
+
+void Mouse(int button, int state, int x, int y)
+{
+
+}
+
+void Motion(int x, int y)
+{
+
+}
+
+void MouseChange(int x, int y) {
+
+}
+
+void main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+    glutInitWindowPosition(0, 0);
+    glutInitWindowSize(width, height);
+    glutCreateWindow("SkyLine");
+    Setting();
+
+    glewExperimental = GL_TRUE;
+    if (glewInit() != GLEW_OK)
+    {
+        cerr << "NOT INIT" << endl;
+    }
+    else
+        cout << "INIT" << endl;
+
+    InitShader();
+    InitBuffer();
+    glEnable(GL_DEPTH_TEST);
+    glFrontFace(GL_CW);
+    glutDisplayFunc(drawScene);
+    glutKeyboardFunc(KeyBoard);
+    glutSpecialFunc(SpecialKeyBoard);
+    glutSpecialUpFunc(SpecialKeyBoardUp);
+    glutKeyboardUpFunc(KeyBoardUp);
+    glutMouseFunc(Mouse);
+    glutMotionFunc(Motion);
+    glutReshapeFunc(Reshape);
+
+    glutTimerFunc(5, Timer, 1);
+
+    Building_Setting();
+    Building_Mat();
+
+    glutMainLoop();
+}
+
+GLvoid Setting()
+{
+
+}
+
+GLint Collision(float first_x1, float first_x2, float last_x1, float last_x2)  // i'am 충돌체크에요
+{
+    if (first_x1 <= last_x1 && last_x1 <= first_x2)
+        return 1;
+    if (first_x1 <= last_x2 && last_x2 <= first_x2)
+        return 1;
+    if (last_x1 <= first_x1 && first_x1 <= last_x2)
+        return 1;
+    if (last_x1 <= first_x2 && first_x2 <= last_x2)
+        return 1;
+    return 0;
+}
+
+bool DoCollision(float x_trans, float y_trans, float z_trans)
+{
+    if (Collision(pilot.x_trans_aoc + x_trans - 0.04, pilot.x_trans_aoc + x_trans + 0.04, build.x_trans - 0.2, build.x_trans + 0.2) +
+        Collision(pilot.z_trans_aoc + z_trans - 0.04, pilot.z_trans_aoc + z_trans + 0.04, build.z_trans - 0.2, build.z_trans + 0.2) +
+        Collision(pilot.y_trans_aoc + y_trans, pilot.y_trans_aoc + y_trans + 0.3, build.y_trans, build.y_trans + 0.14) == 3)
+        return true;
+    else if (Collision(pilot.x_trans_aoc + x_trans - 0.04, pilot.x_trans_aoc + x_trans + 0.04, build2.x_trans - 0.2, build2.x_trans + 0.2) +
+        Collision(pilot.z_trans_aoc + z_trans - 0.04, pilot.z_trans_aoc + z_trans + 0.04, build2.z_trans - 0.2, build2.z_trans + 0.2) +
+        Collision(pilot.y_trans_aoc + y_trans, pilot.y_trans_aoc + y_trans + 0.3, build2.y_trans, build2.y_trans + 0.14) == 3)
+        return true;
+    else if (Collision(pilot.x_trans_aoc + x_trans - 0.04, pilot.x_trans_aoc + x_trans + 0.04, build3.x_trans - 0.2, build3.x_trans + 0.2) +
+        Collision(pilot.z_trans_aoc + z_trans - 0.04, pilot.z_trans_aoc + z_trans + 0.04, build3.z_trans - 0.2, build3.z_trans + 0.2) +
+        Collision(pilot.y_trans_aoc + y_trans, pilot.y_trans_aoc + y_trans + 0.3, build3.y_trans, build3.y_trans + 0.14) == 3)
+        return true;
+    else if (Collision(pilot.x_trans_aoc + x_trans - 0.04, pilot.x_trans_aoc + x_trans + 0.04, build4.x_trans - 0.2, build4.x_trans + 0.2) +
+        Collision(pilot.z_trans_aoc + z_trans - 0.04, pilot.z_trans_aoc + z_trans + 0.04, build4.z_trans - 0.2, build4.z_trans + 0.2) +
+        Collision(pilot.y_trans_aoc + y_trans, pilot.y_trans_aoc + y_trans + 0.3, build4.y_trans, build4.y_trans + 0.14) == 3)
+        return true;
+    else if (Collision(pilot.x_trans_aoc + x_trans - 0.04, pilot.x_trans_aoc + x_trans + 0.04, build5.x_trans - 0.2, build5.x_trans + 0.2) +
+        Collision(pilot.z_trans_aoc + z_trans - 0.04, pilot.z_trans_aoc + z_trans + 0.04, build5.z_trans - 0.2, build5.z_trans + 0.2) +
+        Collision(pilot.y_trans_aoc + y_trans, pilot.y_trans_aoc + y_trans + 0.3, build5.y_trans, build5.y_trans + 0.14) == 3)
+        return true;
+    else if (Collision(pilot.x_trans_aoc + x_trans - 0.04, pilot.x_trans_aoc + x_trans + 0.04, build6.x_trans - 0.2, build6.x_trans + 0.2) +
+        Collision(pilot.z_trans_aoc + z_trans - 0.04, pilot.z_trans_aoc + z_trans + 0.04, build6.z_trans - 0.2, build6.z_trans + 0.2) +
+        Collision(pilot.y_trans_aoc + y_trans, pilot.y_trans_aoc + y_trans + 0.3, build6.y_trans, build6.y_trans + 0.14) == 3)
+        return true;
+    else if (Collision(pilot.x_trans_aoc + x_trans - 0.04, pilot.x_trans_aoc + x_trans + 0.04, build7.x_trans - 0.2, build7.x_trans + 0.2) +
+        Collision(pilot.z_trans_aoc + z_trans - 0.04, pilot.z_trans_aoc + z_trans + 0.04, build7.z_trans - 0.2, build7.z_trans + 0.2) +
+        Collision(pilot.y_trans_aoc + y_trans, pilot.y_trans_aoc + y_trans + 0.3, build7.y_trans, build7.y_trans + 0.14) == 3)
+        return true;
+    else if (Collision(pilot.x_trans_aoc + x_trans - 0.04, pilot.x_trans_aoc + x_trans + 0.04, build8.x_trans - 0.2, build8.x_trans + 0.2) +
+        Collision(pilot.z_trans_aoc + z_trans - 0.04, pilot.z_trans_aoc + z_trans + 0.04, build8.z_trans - 0.2, build8.z_trans + 0.2) +
+        Collision(pilot.y_trans_aoc + y_trans, pilot.y_trans_aoc + y_trans + 0.3, build8.y_trans, build8.y_trans + 0.14) == 3)
+        return true;
+    else if (Collision(pilot.x_trans_aoc + x_trans - 0.04, pilot.x_trans_aoc + x_trans + 0.04, build9.x_trans - 0.2, build9.x_trans + 0.2) +
+        Collision(pilot.z_trans_aoc + z_trans - 0.04, pilot.z_trans_aoc + z_trans + 0.04, build9.z_trans - 0.2, build9.z_trans + 0.2) +
+        Collision(pilot.y_trans_aoc + y_trans, pilot.y_trans_aoc + y_trans + 0.3, build9.y_trans, build9.y_trans + 0.14) == 3)
+        return true;
+    else if (Collision(pilot.x_trans_aoc + x_trans - 0.04, pilot.x_trans_aoc + x_trans + 0.04, build10.x_trans - 0.2, build10.x_trans + 0.2) +
+        Collision(pilot.z_trans_aoc + z_trans - 0.04, pilot.z_trans_aoc + z_trans + 0.04, build10.z_trans - 0.2, build10.z_trans + 0.2) +
+        Collision(pilot.y_trans_aoc + y_trans, pilot.y_trans_aoc + y_trans + 0.3, build10.y_trans, build10.y_trans + 0.14) == 3)
+        return true;
+    else if (Collision(pilot.x_trans_aoc + x_trans - 0.04, pilot.x_rotate_aoc + x_trans + 0.04, +0.85f, -0.85f) +
+        Collision(pilot.z_trans_aoc + z_trans - 0.04, pilot.z_trans_aoc + z_trans + 0.04, 0.85f, -0.85f) +
+        Collision(pilot.y_trans_aoc + y_trans, pilot.y_trans_aoc + y_trans + 0.3, 0.f, 0.f) == 2)
+        pilot.y_rotate = pilot.y_rotate + 180;
+
+    else return false;
+}
+
+
+
+
+GLvoid Timer(int value) // get_events ( 헬기 엔진 )
+{
+    if (h_f.x_is_trans) {
+        pilot.x_trans += 0.1;
+    }
+
+    if (h_f.right_walk) {
+        if (pilot.x_trans_aoc > -2.5) {
+            pilot.x_trans_aoc -= 0.01f;
+            if (pilot.z_rotate < 15)
+                pilot.z_rotate += 1.0f;
+        }
+    }
+    else if (h_f.left_walk) {
+        if (pilot.x_trans_aoc < 2.5)
+            pilot.x_trans_aoc += 0.01f;
+        if (pilot.z_rotate > -15)
+            pilot.z_rotate -= 1.0f;
+    }
+    else if (h_f.back_walk) {
+        pilot.y_trans_aoc -= 0.01f;
+        if (pilot.x_rotate > -15)
+            pilot.x_rotate -= 1.0f;
+    }
+    else if (h_f.front_walk) {
+        pilot.y_trans_aoc += 0.01f;
+        if (pilot.x_rotate < 15)
+            pilot.x_rotate += 1.0f;
+    }
+    else {
+        if (pilot.x_rotate < 0.f)
+            pilot.x_rotate += 1.0f;
+        if (pilot.x_rotate > 0.f)
+            pilot.x_rotate -= 1.0f;
+        if (pilot.z_rotate > 0.f)
+            pilot.z_rotate -= 1.0f;
+        if (pilot.z_rotate < 0.f)
+            pilot.z_rotate += 1.0f;
+    }
+
+    // 프로펠러 회전
+    pilot.y_rotate_aoc += 10;
+
+    if (h_f.shoot_bullet)
+        bullet.z_trans += 0.1f;
+
+
+    if (h_f.game_start)
+        game.z_trans -= 0.1f;
+       
+
+    if (DoCollision(0.f,0.f,0.5f) == true) {
+        exit(0);
+    }
+
+    glutPostRedisplay();
+    glutTimerFunc(5, Timer, 1);
+}
